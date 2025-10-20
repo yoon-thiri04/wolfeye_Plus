@@ -1,0 +1,11 @@
+motor
+dotenv
+pillow
+numpy
+fastapi
+deepface
+pydantic
+multipart
+uvicorn
+ultralytics
+redis
