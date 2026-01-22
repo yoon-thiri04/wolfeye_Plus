@@ -485,6 +485,12 @@ export default function LiveFaceVerify() {
                           screenshotFormat="image/jpeg"
                           className="w-full h-full object-cover"
                           videoConstraints={{ facingMode: "user" }}
+                          onUserMediaError={(err) => {
+                            console.error("Webcam Error:", err);
+                            setAuthError(true);
+                            // You might want to add a specific state for camera errors to show a specific message
+                            alert("Camera access failed. Note: Browsers block camera access on insecure (HTTP) connections from remote IPs. Please use HTTPS or localhost.");
+                          }}
                           onLoadedMetadata={() => {
                             setTimeout(() => {
                               if (containerRef.current && webcamRef.current?.video) {
