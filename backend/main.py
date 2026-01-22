@@ -9,6 +9,7 @@ from backend.routes.iot import iot_router
 from fastapi.middleware.cors import CORSMiddleware
 from backend.routes.ppe_detection import detect_router, r
 from backend.db import db
+from backend.seed_users import seed
 
 from fastapi.responses import FileResponse
 
@@ -88,6 +89,12 @@ if os.path.isdir(frontend_dist):
 
 @app.on_event("startup")
 async def startup_event():
+    print("=== STARTUP: Seeding Database ===")
+    try:
+        await seed()
+    except Exception as e:
+        print(f"Error during seeding: {e}")
+
     print("=== REGISTERED ROUTES ===")
     for route in app.routes:
         if hasattr(route, "methods"):
