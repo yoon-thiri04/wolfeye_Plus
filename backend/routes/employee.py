@@ -54,8 +54,22 @@ async def create_employee_api(
 
     print(file_path)
     from deepface import DeepFace
-    raw_result = DeepFace.represent(img_path=file_path)[0]
+    try:
+        # Enforce detection to ensure high quality registration photos
+        # Explicitly using VGG-Face (4096 dims) to match seeder and other parts
+        raw_result = DeepFace.represent(img_path=file_path, model_name="VGG-Face", enforce_detection=True)[0]
+    except Exception as e:
+        # Clean up file if detection fails
+        if os.path.exists(file_path):
+            os.remove(file_path)
+        print(f"DeepFace Error: {str(e)}")
+        raise HTTPException(
+            status_code=400, 
+            detail="No face detected in the photo. Please use a clear, well-lit photo containing a single face."
+        )
+
     print(raw_result)
+
     embedding_data = format_embedding_result(raw_result)
 
     existing_user = await get_user_by_email(email)
@@ -91,7 +105,7 @@ async def verify_employee(image: UploadFile = File(...), current_user: dict = De
 
     try:
         from deepface import DeepFace
-        raw_results = DeepFace.represent(img_path=temp_path)
+        raw_results = DeepFace.represent(img_path=temp_path, model_name="VGG-Face")
         if len(raw_results) > 1:
             return {
                 "status": "error",
@@ -115,6 +129,12 @@ async def verify_employee(image: UploadFile = File(...), current_user: dict = De
 
     for emp in employees:
         stored_embedding = np.array(emp["embedding"])
+        
+        # Skip if embedding dimensions don't match (e.g. old data vs new model)
+        if stored_embedding.shape != new_embedding.shape:
+            print(f"Warning: Skipping employee {emp.get('name')} due to embedding mismatch. Stored: {stored_embedding.shape}, New: {new_embedding.shape}")
+            continue
+
         score = cosine_similarity(stored_embedding, new_embedding)
         if score > best_score:
             best_score = score

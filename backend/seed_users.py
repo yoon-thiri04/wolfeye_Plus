@@ -57,8 +57,8 @@ async def seed():
     employee = await db.employee.find_one({"email": employee_email})
     if not employee:
         print(f"Creating Employee: {employee_email}")
-        # Dummy embedding (DeepFace VGG-Face is 2622 or 4096, Facenet is 128. We just need a list)
-        dummy_embedding = [0.0] * 128 
+        # Dummy embedding (DeepFace VGG-Face is typically 4096)
+        dummy_embedding = [0.0] * 4096
         
         await db.employee.insert_one({
             "employee_id": "EMP001",
