@@ -26,6 +26,9 @@ jobs:
             # Pull latest changes
             git pull origin main
 
+            # Remove Python cache files to prevent conflicts
+            find . -name "__pycache__" -type d -exec rm -rf {} +
+
             # Rebuild and restart containers
             docker compose -f docker-compose.prod.yml up -d --build --remove-orphans
             
