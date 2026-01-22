@@ -82,7 +82,7 @@ async def create_employee_api(
     return {"name": employee.name}
 
 
-@employee_router.post("/verify/")
+@employee_router.post("/verify") 
 async def verify_employee(image: UploadFile = File(...), current_user: dict = Depends(company_required)):
     temp_path = os.path.join(FRAME_DIR, image.filename)
     print(temp_path)
