@@ -10,6 +10,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from backend.routes.ppe_detection import detect_router, r
 from backend.db import db
 
+from fastapi.responses import FileResponse
+
 app = FastAPI()
 
 origins = [
@@ -57,7 +59,20 @@ app.include_router(iot_router, prefix="/api")
 
 frontend_dist = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "frontend", "dist"))
 if os.path.isdir(frontend_dist):
-    app.mount("/", StaticFiles(directory=frontend_dist, html=True), name="frontend")
+    # Mount assets folder if it exists (Vite build output usually has an assets folder)
+    assets_dir = os.path.join(frontend_dist, "assets")
+    if os.path.isdir(assets_dir):
+        app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
+
+    @app.get("/{full_path:path}")
+    async def serve_spa(full_path: str):
+        # Serve static files if they exist
+        path = os.path.join(frontend_dist, full_path)
+        if os.path.exists(path) and os.path.isfile(path):
+            return FileResponse(path)
+        
+        # Fallback to index.html for SPA routing
+        return FileResponse(os.path.join(frontend_dist, "index.html"))
 
 @app.on_event("startup")
 async def startup_event():

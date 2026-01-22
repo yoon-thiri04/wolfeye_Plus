@@ -7,6 +7,7 @@ services:
     container_name: wolfeye_plus
     ports:
       - 8000:8000
+    restart: always
     depends_on:
       - database
       - redis
@@ -24,6 +25,7 @@ services:
   database:
     image: mongo:latest
     container_name: database
+    restart: always
     ports:
       - 27017:27017
     volumes:
@@ -32,6 +34,7 @@ services:
   redis:
     image: redis:7-alpine
     container_name: redis
+    restart: always
     ports:
       - 6379:6379
     volumes:
