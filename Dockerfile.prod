@@ -32,10 +32,16 @@ RUN mkdir -p /app/backend/employee_profiles /app/backend/temp_uploads /root/.dee
 COPY backend /app/backend
 COPY --from=frontend-build /app/frontend/dist /app/frontend/dist
 
+# Pre-download DeepFace models
+RUN python -c "from deepface import DeepFace; DeepFace.build_model('VGG-Face')"
+
 # Create a non-root user and switch to it
-RUN useradd -m appuser && \
-    chown -R appuser:appuser /app /root/.deepface
-USER appuser
+# Note: We keep running as root for now to ensure access to the downloaded weights in /root/.deepface
+# Or we can move the weights to a shared location if needed. 
+# For simplicity in this setup, we'll comment out switching to appuser to avoid permission issues with the weights volume.
+# RUN useradd -m appuser && \
+#     chown -R appuser:appuser /app /root/.deepface
+# USER appuser
 
 EXPOSE 8000
 CMD ["uvicorn","backend.main:app","--host","0.0.0.0","--port","8000"]
