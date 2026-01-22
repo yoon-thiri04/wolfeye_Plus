@@ -20,8 +20,8 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           port: ${{ secrets.VPS_PORT || 22 }}
           script: |
-            # Navigate to project directory
-            cd ~/opt/wolfeye_Plus
+            # Navigate to project directory (Adjust this path if your clone location is different)
+            cd /opt/wolfeye_Plus || cd ~/wolfeye_Plus
 
             # Pull latest changes
             git fetch origin staging
