@@ -14,7 +14,7 @@ async def seed():
     
     # 1. Admin
     admin_email = "admin@wolfeye.com"
-    admin_pass = "admin123"
+    admin_pass = "password"
     
     admin = await db.admin.find_one({"email": admin_email})
     if not admin:
@@ -32,7 +32,7 @@ async def seed():
 
     # 2. Company
     company_email = "company@wolfeye.com"
-    company_pass = "companytempo@123!"
+    company_pass = "password"
     
     company = await db.company.find_one({"email": company_email})
     if not company:
@@ -52,7 +52,7 @@ async def seed():
 
     # 3. Employee
     employee_email = "employee@wolfeye.com"
-    employee_pass = "employee@123!"
+    employee_pass = "password"
     
     employee = await db.employee.find_one({"email": employee_email})
     if not employee:
