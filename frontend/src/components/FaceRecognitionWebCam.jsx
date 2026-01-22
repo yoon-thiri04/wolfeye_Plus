@@ -245,7 +245,7 @@ export default function LiveFaceVerify() {
 
     try {
       console.log("Sending face verification request...");
-      const res = await api.post("/employee/verify/", formData);
+      const res = await api.post("/employee/verify", formData); // Removed trailing slash
 
       setResult(res.data);
       setAuthError(false);
