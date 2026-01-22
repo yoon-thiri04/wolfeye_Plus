@@ -1,5 +1,5 @@
 motor
-dotenv
+python-dotenv
 pillow
 numpy
 fastapi
@@ -9,6 +9,7 @@ python-multipart
 uvicorn
 ultralytics
 redis
-passlib[bcrypt]
+passlib
+bcrypt==4.0.1
 python-jose
 tf-keras
