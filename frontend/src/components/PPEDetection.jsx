@@ -69,7 +69,7 @@ export default function PPEDetection() {
   useEffect(() => {
     const start = async () => {
       try {
-        const res = await api.post("/api/detect/start_session", {
+        const res = await api.post("/detect/start_session", {
           person_id: email,
         });
         setSessionId(res.data.session_id);
@@ -99,7 +99,7 @@ export default function PPEDetection() {
     if (!imageSrc) return;
 
     try {
-      const res = await api.post("/api/detect/ppe_detect", {
+      const res = await api.post("/detect/ppe_detect", {
         image: imageSrc,
         session_id: sessionId,
       });
