@@ -75,6 +75,22 @@ Open your browser and navigate to:
 *   **Frontend**: `http://<YOUR_VPS_IP>:8090`
 *   **API Docs**: `http://<YOUR_VPS_IP>:8090/docs`
 
+### ⚠️ Important: Camera Access on HTTP
+Browsers block camera access on insecure (HTTP) connections from remote IPs. To use the camera:
+
+**Option 1: Configure Browser (Quickest)**
+1.  Open Chrome/Edge and go to: `chrome://flags/#unsafely-treat-insecure-origin-as-secure`
+2.  Enable the "Insecure origins treated as secure" flag.
+3.  Add your URL: `http://<YOUR_VPS_IP>:8090`
+4.  Restart the browser.
+
+**Option 2: Use SSH Tunnel (Secure)**
+Run this on your **local machine**:
+```bash
+ssh -L 8090:localhost:8090 root@<YOUR_VPS_IP>
+```
+Then access via `http://localhost:8090`
+
 ---
 
 ## Updating the Deployment

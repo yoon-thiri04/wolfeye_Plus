@@ -488,8 +488,15 @@ export default function LiveFaceVerify() {
                           onUserMediaError={(err) => {
                             console.error("Webcam Error:", err);
                             setAuthError(true);
-                            // You might want to add a specific state for camera errors to show a specific message
-                            alert("Camera access failed. Note: Browsers block camera access on insecure (HTTP) connections from remote IPs. Please use HTTPS or localhost.");
+                            // Show detailed instructions for HTTP camera access
+                            const isHttp = window.location.protocol === 'http:';
+                            const isRemote = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+                            
+                            if (isHttp && isRemote) {
+                                alert(`CAMERA BLOCKED BY BROWSER\n\nTo use camera on HTTP:\n1. Open chrome://flags/#unsafely-treat-insecure-origin-as-secure\n2. Enable it and add: ${window.location.origin}\n3. Restart browser`);
+                            } else {
+                                alert("Camera access failed. Please check permissions.");
+                            }
                           }}
                           onLoadedMetadata={() => {
                             setTimeout(() => {
