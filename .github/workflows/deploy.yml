@@ -2,7 +2,7 @@ name: Deploy to VPS
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "staging" ]
   workflow_dispatch:
 
 jobs:
@@ -24,7 +24,8 @@ jobs:
             cd ~/wolfeye_Plus || cd /home/${{ secrets.VPS_USER }}/wolfeye_Plus
 
             # Pull latest changes
-            git pull origin main
+            git fetch origin staging
+            git reset --hard origin/staging
 
             # Remove Python cache files to prevent conflicts
             find . -name "__pycache__" -type d -exec rm -rf {} +
