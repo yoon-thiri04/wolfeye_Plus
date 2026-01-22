@@ -7,7 +7,7 @@ const char* ssid = "YOUR_WIFI_SSID";
 const char* password = "YOUR_WIFI_PASSWORD";
 
 // Backend Configuration
-const char* backend_url = "http://YOUR_SERVER_IP:8000/api/iot/check_access";
+const char* backend_url = "http://YOUR_SERVER_IP:8090/api/iot/check_access";
 const String device_id = "DOOR_001"; 
 
 // Hardware Configuration

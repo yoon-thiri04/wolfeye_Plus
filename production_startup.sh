@@ -16,17 +16,17 @@ sleep 15
 
 echo "Checking API Health..."
 if command -v curl &> /dev/null; then
-    RESPONSE=$(curl -s http://localhost:8000/api/health)
+    RESPONSE=$(curl -s http://localhost:8090/api/health)
     echo "Response: $RESPONSE"
     
     if [[ $RESPONSE == *"\"status\":\"ok\""* ]]; then
         echo "✅ System is HEALTHY and Ready!"
-        echo "Frontend: http://localhost:8000"
-        echo "API:      http://localhost:8000/api"
+        echo "Frontend: http://localhost:8090"
+        echo "API:      http://localhost:8090/api"
     else
         echo "⚠️  System might be having issues. Check logs."
         echo "Command: docker compose -f docker-compose.prod.yml logs app"
     fi
 else
-    echo "curl not found. Please verify manually at http://localhost:8000/api/health"
+    echo "curl not found. Please verify manually at http://localhost:8090/api/health"
 fi

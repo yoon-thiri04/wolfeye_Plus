@@ -1,0 +1,33 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT || 22 }}
+          script: |
+            # Navigate to project directory
+            cd ~/wolfeye_Plus || cd /home/${{ secrets.VPS_USER }}/wolfeye_Plus
+
+            # Pull latest changes
+            git pull origin main
+
+            # Rebuild and restart containers
+            docker compose -f docker-compose.prod.yml up -d --build --remove-orphans
+            
+            # Prune unused images to save space
+            docker image prune -f

@@ -1,5 +1,5 @@
 import os
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
 from backend.routes.employee import employee_router
 from backend.routes.auth import router
@@ -12,12 +12,20 @@ from backend.db import db
 
 from fastapi.responses import FileResponse
 
-app = FastAPI()
+app = FastAPI(
+    title="WolfEye Plus API",
+    description="API for WolfEye Plus Employee Monitoring and Safety System",
+    version="1.0.0",
+    docs_url="/docs",
+    redoc_url="/redoc",
+    openapi_url="/openapi.json"
+)
 
 origins = [
     "http://localhost:5173",
     "http://localhost",
-    "http://localhost:80"
+    "http://localhost:80",
+    "http://localhost:8090"
 ]
 
 app.add_middleware(
@@ -66,6 +74,10 @@ if os.path.isdir(frontend_dist):
 
     @app.get("/{full_path:path}")
     async def serve_spa(full_path: str):
+        # Prevent API and Docs 404s from returning the React App
+        if full_path.startswith(("api", "docs", "redoc", "openapi.json")):
+            raise HTTPException(status_code=404, detail="Not Found")
+
         # Serve static files if they exist
         path = os.path.join(frontend_dist, full_path)
         if os.path.exists(path) and os.path.isfile(path):

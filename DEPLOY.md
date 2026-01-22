@@ -51,16 +51,16 @@ scp -r /path/to/wolfeye_Plus user@your_vps_ip:/home/user/
 
 2.  Ensure `docker-compose.prod.yml` is present.
 
-3.  (Optional) If you want to run on port 80 directly, edit `docker-compose.prod.yml`:
+3.  (Optional) If you want to run on a different port (default is 8090), edit `docker-compose.prod.yml`:
     Change:
     ```yaml
     ports:
-      - 8000:8000
+      - 8090:8000
     ```
     To:
     ```yaml
     ports:
-      - 80:8000
+      - <YOUR_CUSTOM_PORT>:8000
     ```
 
 ## Step 3: Run the Application
@@ -89,9 +89,42 @@ docker compose -f docker-compose.prod.yml up -d --build
     ```
 
 3.  Access your application:
-    Open your browser and visit `http://<your_vps_ip>:8000` (or just IP if you changed port to 80).
+    Open your browser and visit `http://<your_vps_ip>:8090`.
 
-## Step 5: (Optional) Nginx Reverse Proxy & SSL
+## Step 5: Automate Deployment with GitHub Actions
+
+This project includes a GitHub Actions workflow (`.github/workflows/deploy.yml`) that automatically deploys changes to your VPS when you push to the `main` branch.
+
+### 1. Setup SSH Keys
+On your local machine, generate an SSH key pair (if you haven't already):
+```bash
+ssh-keygen -t rsa -b 4096 -C "github-actions"
+```
+- Add the **Public Key** (`id_rsa.pub`) to your VPS:
+  ```bash
+  cat ~/.ssh/id_rsa.pub | ssh user@your_vps_ip "mkdir -p ~/.ssh && cat >> ~/.ssh/authorized_keys"
+  ```
+- Keep the **Private Key** (`id_rsa`) safe; you will need it for GitHub Secrets.
+
+### 2. Configure GitHub Secrets
+Go to your GitHub repository → **Settings** → **Secrets and variables** → **Actions** → **New repository secret**.
+
+Add the following secrets:
+
+| Secret Name | Value |
+|-------------|-------|
+| `VPS_HOST` | The IP address of your VPS (e.g., `123.45.67.89`). |
+| `VPS_USER` | The username to SSH into (e.g., `root` or `ubuntu`). |
+| `VPS_SSH_KEY` | The content of your **Private Key** (start with `-----BEGIN OPENSSH PRIVATE KEY-----`). |
+| `VPS_PORT` | (Optional) Your SSH port if not 22. |
+
+### 3. Deploy
+Now, whenever you push to `main`, GitHub Actions will:
+1.  SSH into your VPS.
+2.  Pull the latest code.
+3.  Rebuild and restart the Docker containers.
+
+## Step 6: (Optional) Nginx Reverse Proxy & SSL
 
 For a professional setup with a domain name and SSL (HTTPS), use Nginx on the host.
 
@@ -112,7 +145,7 @@ For a professional setup with a domain name and SSL (HTTPS), use Nginx on the ho
         server_name your_domain.com;
 
         location / {
-            proxy_pass http://localhost:8000;
+            proxy_pass http://localhost:8090;
             proxy_http_version 1.1;
             proxy_set_header Upgrade $http_upgrade;
             proxy_set_header Connection 'upgrade';

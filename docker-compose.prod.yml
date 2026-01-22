@@ -6,7 +6,7 @@ services:
       dockerfile: Dockerfile.prod
     container_name: wolfeye_plus
     ports:
-      - 8000:8000
+      - 8090:8000
     restart: always
     depends_on:
       - database
