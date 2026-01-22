@@ -21,7 +21,7 @@ jobs:
           port: ${{ secrets.VPS_PORT || 22 }}
           script: |
             # Navigate to project directory
-            cd ~/wolfeye_Plus || cd /home/${{ secrets.VPS_USER }}/wolfeye_Plus
+            cd ~/opt/wolfeye_Plus
 
             # Pull latest changes
             git fetch origin staging
