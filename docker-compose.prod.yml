@@ -24,7 +24,7 @@ services:
 
   database:
     image: mongo:latest
-    container_name: database
+    container_name: wolfeye_mongo
     restart: always
     ports:
       - 27017:27017
@@ -33,7 +33,7 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: redis
+    container_name: wolfeye_redis
     restart: always
     ports:
       - 6379:6379
