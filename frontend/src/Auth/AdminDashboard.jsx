@@ -43,7 +43,7 @@ const AdminDashboard = () => {
   const fetchCompanies = async () => {
     try {
       const token = localStorage.getItem("admin_token");
-      const response = await axios.get("http://localhost:8000/admin/company_list", {
+      const response = await axios.get("/api/admin/company_list", {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -71,7 +71,7 @@ const AdminDashboard = () => {
     try {
       const token = localStorage.getItem("admin_token");
       const response = await axios.post(
-        "http://localhost:8000/admin/add_company",
+        "/api/admin/add_company",
         companyForm,
         {
           headers: {
@@ -111,7 +111,7 @@ const AdminDashboard = () => {
 
     try {
       const token = localStorage.getItem("admin_token");
-      await axios.delete(`http://localhost:8000/admin/delete_company?company_id=${companyId}`, {
+      await axios.delete(`/api/admin/delete_company?company_id=${companyId}`, {
         headers: {
           Authorization: `Bearer ${token}`
         }

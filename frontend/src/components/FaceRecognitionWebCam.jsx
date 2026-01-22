@@ -120,7 +120,7 @@ export default function LiveFaceVerify() {
   };
 
   const api = axios.create({
-    baseURL: "http://localhost:8000",
+    baseURL: "/api",
     withCredentials: true,
   });
 
@@ -168,7 +168,7 @@ export default function LiveFaceVerify() {
       console.log("Ending detection for company:", companyId);
 
       const res = await api.post(
-        "http://localhost:8000/company/end_detect",
+        "/api/company/end_detect",
         {
           end: true,
           company_id: companyId

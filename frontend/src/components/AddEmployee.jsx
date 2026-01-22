@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Camera, Upload, Edit2, Trash2, Star, UserPlus, Check, X } from "lucide-react";
+import { Camera, Upload, Edit2, Trash2, Star, UserPlus, Check, X, Loader2 } from "lucide-react";
 import axios from "axios";
 import Navbar from "./Navbar.jsx";
 
@@ -11,6 +11,11 @@ const AddEmployee = () => {
   const [editingId, setEditingId] = useState(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const getCompanyToken = () =>
+    localStorage.getItem("company_token") ||
+    localStorage.getItem("face_verification_company_token");
 
   // Edit employee
   const handleEdit = (employee) => {
@@ -43,12 +48,14 @@ const AddEmployee = () => {
       console.log(key, value);
     }
 
+    setLoading(true);
+
     try {
-      const token = localStorage.getItem("company_token");
+      const token = getCompanyToken();
 
       if (editingId) {
         // Update employee
-        await axios.put(`http://localhost:8000/employee/${editingId}`, formData, {
+        await axios.put(`/api/employee/${editingId}`, formData, {
           headers: {
             "Content-Type": "multipart/form-data",
             Authorization: `Bearer ${token}`
@@ -64,7 +71,7 @@ const AddEmployee = () => {
         setTimeout(() => setShowSuccess(false), 3000);
       } else {
         // Add employee
-        const res = await axios.post("http://localhost:8000/employee/", formData, {
+        const res = await axios.post("/api/employee/", formData, {
           headers: {
             "Content-Type": "multipart/form-data",
             Authorization: `Bearer ${token}`
@@ -104,14 +111,16 @@ const AddEmployee = () => {
       } else {
         alert("Failed to save employee. Please try again.");
       }
+    } finally {
+      setLoading(false);
     }
   };
 
   // Delete employee
   const handleDelete = async (id) => {
     try {
-      const token = localStorage.getItem("company_token");
-      await axios.delete(`http://localhost:8000/employee/${id}`, {
+      const token = getCompanyToken();
+      await axios.delete(`/api/employee/${id}`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -148,8 +157,8 @@ const AddEmployee = () => {
 
   const fetchEmployees = async () => {
     try {
-      const token = localStorage.getItem("company_token");
-      const res = await axios.get("http://localhost:8000/company/emp_list", {
+      const token = getCompanyToken();
+      const res = await axios.get("/api/company/emp_list", {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -184,6 +193,23 @@ const AddEmployee = () => {
   return (
     <div className="min-h-screen bg-white p-8">
         <Navbar />
+      {/* Loading Overlay */}
+      {loading && (
+        <div className="fixed inset-0 bg-black/50 bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-lg max-w-md w-full p-8 flex flex-col items-center text-center">
+            <Loader2 className="w-12 h-12 text-blue-600 animate-spin mb-4" />
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">Processing Employee Data</h3>
+            <p className="text-gray-600 mb-4">
+              Please wait while we process the image and update the database.
+            </p>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-blue-800">
+              <p className="font-semibold mb-1">Note for First-Time Setup:</p>
+              <p>The system may need to download AI models (approx. 500MB). This can take a few minutes depending on your internet connection.</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Success Notification */}
       {showSuccess && (
         <div className="fixed top-4 right-4 bg-green-50 border border-green-200 rounded-lg p-4 shadow-lg z-50 max-w-sm">
@@ -345,15 +371,24 @@ const AddEmployee = () => {
 
                 <button
                   type="submit"
-                  disabled={!form.name || !form.emp_id || !file}
+                  disabled={!form.name || !form.emp_id || !file || loading}
                   className={`w-full mt-4 font-medium py-3 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors
-                    ${!form.name || !form.emp_id || !file
+                    ${!form.name || !form.emp_id || !file || loading
                       ? "bg-gray-400 cursor-not-allowed"
                       : "bg-green-600 hover:bg-green-700 text-white"
                     }`}
                 >
-                  <UserPlus className="w-4 h-4" />
-                  Enroll Employee
+                  {loading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      <UserPlus className="w-4 h-4" />
+                      Enroll Employee
+                    </>
+                  )}
                 </button>
               </div>
             </div>
@@ -376,7 +411,7 @@ const AddEmployee = () => {
                   <div className="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center bg-gray-200">
                     {employee.image_path ? (
                       <img
-                        src={`http://localhost:8000/${employee.image_path}`}
+                        src={`/api/${employee.image_path}`}
                         alt={employee.name}
                         className="w-12 h-12 rounded-full object-cover"
                         onError={(e) => {
@@ -436,14 +471,16 @@ const AddEmployee = () => {
                     <div className="flex gap-2">
                       <button
                         onClick={handleSubmit}
-                        className="flex items-center gap-1 px-3 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-800 transition-colors"
+                        disabled={loading}
+                        className={`flex items-center gap-1 px-3 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-800 transition-colors ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
                       >
-                        <Check className="w-4 h-4" />
+                        {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
                         Save
                       </button>
                       <button
                         onClick={() => setEditingId(null)}
-                        className="px-3 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                        disabled={loading}
+                        className="px-3 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors disabled:opacity-50"
                       >
                         Cancel
                       </button>
@@ -451,7 +488,8 @@ const AddEmployee = () => {
                   ) : (
                     <button
                       onClick={() => handleEdit(employee)}
-                      className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                      disabled={loading}
+                      className="p-2 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
                       title="Edit"
                     >
                       <Edit2 className="w-4 h-4 text-gray-600" />
@@ -460,7 +498,8 @@ const AddEmployee = () => {
 
                   <button
                     onClick={() => confirmDelete(employee.id, employee.name)}
-                    className="p-2 hover:bg-red-50 rounded-lg transition-colors"
+                    disabled={loading}
+                    className="p-2 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
                     title="Delete"
                   >
                     <Trash2 className="w-4 h-4 text-red-600" />

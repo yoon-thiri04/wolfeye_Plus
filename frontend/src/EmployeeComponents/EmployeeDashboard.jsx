@@ -18,7 +18,7 @@ const EmployeeDashboard = () => {
       setLoading(true);
       const token = localStorage.getItem("employee_token");
 
-      const response = await axios.get("http://localhost:8000/employee/dashboard", {
+      const response = await axios.get("/api/employee/dashboard", {
         headers: {
           'Authorization': `Bearer ${token}`
         }

@@ -1,5 +1,5 @@
 import React from "react";
-import { Home, UserPlus, Settings, PanelTopDashedIcon } from "lucide-react";
+import { Home, UserPlus, Settings, PanelTopDashedIcon, LogOut } from "lucide-react";
 
 const Navbar = () => {
   const currentPath = window.location.pathname;
@@ -25,6 +25,15 @@ const Navbar = () => {
 
     console.log("Navigating to", path, "with company token");
     window.location.href = path;
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("company_token");
+    localStorage.removeItem("company_user");
+    localStorage.removeItem("face_verification_company_token");
+    localStorage.removeItem("face_verification_company_id");
+    localStorage.removeItem("face_verification_company_user");
+    window.location.href = "/company/login";
   };
 
   return (
@@ -76,6 +85,13 @@ const Navbar = () => {
             <span className="text-sm">Settings</span>
           </button>
         </div>
+        <button
+          onClick={handleLogout}
+          className="flex items-center gap-2 transition-colors cursor-pointer text-gray-600 hover:text-gray-900"
+        >
+          <LogOut className="w-5 h-5" />
+          <span className="text-sm">Logout</span>
+        </button>
       </div>
     </nav>
   );

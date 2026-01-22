@@ -22,6 +22,14 @@ const CompanyLogin = () => {
     }
   }, [navigate]);
 
+  const decodeToken = (token) => {
+    try {
+      return JSON.parse(atob(token.split(".")[1]));
+    } catch (err) {
+      return null;
+    }
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -50,14 +58,14 @@ const CompanyLogin = () => {
       const loginAttempts = [
 
         // General login with role
-        axios.post("http://localhost:8000/login", {
+        axios.post("/api/login", {
           email: formData.email,
           password: formData.password,
           role: "company"
         }),
 
         //  Simple login
-        axios.post("http://localhost:8000/login", {
+        axios.post("/api/login", {
           email: formData.email,
           password: formData.password
         })
@@ -97,11 +105,13 @@ const CompanyLogin = () => {
         };
       } else if (response.data.token) {
         token = response.data.token;
+        const payload = decodeToken(token);
+        const responseUser = response.data.user;
         userData = {
-          id: response.data.id || response.data.user_id,
-          email: formData.email,
-          role: response.data.role || "company",
-          name: response.data.name || formData.email.split('@')[0]
+          id: responseUser?.id || payload?.id || response.data.id || response.data.user_id,
+          email: responseUser?.email || formData.email,
+          role: responseUser?.role || payload?.role || "company",
+          name: responseUser?.name || response.data.name || formData.email.split('@')[0]
         };
       } else {
         throw new Error("No authentication token found in response");
@@ -115,8 +125,8 @@ const CompanyLogin = () => {
       localStorage.setItem("face_verification_company_token", token);
       localStorage.setItem("face_verification_company_id", userData.id);
 
-      console.log("Company login successful, navigating to homepage");
-      navigate("/");
+      console.log("Company login successful, navigating to dashboard");
+      navigate("/company/dashboard");
 
     } catch (err) {
       console.error("Company login error:", err);
@@ -146,7 +156,7 @@ const CompanyLogin = () => {
   const useTestCredentials = () => {
     setFormData({
       email: "company@example.com",
-      password: "company123"
+      password: "companytempo@123!"
     });
   };
 
@@ -249,6 +259,20 @@ const CompanyLogin = () => {
               )}
             </button>
           </form>
+
+          <div className="mt-6 rounded-lg border border-blue-100 bg-blue-50 p-4">
+            <p className="text-sm font-semibold text-blue-900">Register Company</p>
+            <p className="text-xs text-blue-700 mt-1">
+              Company accounts are created by admins. Sign in as admin to create a company user.
+            </p>
+            <button
+              type="button"
+              onClick={() => navigate("/admin/login")}
+              className="mt-3 text-xs font-semibold text-blue-700 hover:text-blue-900"
+            >
+              Go to Admin Login
+            </button>
+          </div>
 
           <div className="mt-8 pt-6 border-t border-gray-200">
             <div className="bg-blue-50 rounded-lg p-4">

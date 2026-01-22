@@ -82,7 +82,7 @@ const CompanyDashboard = () => {
 
       console.log("Fetching dashboard data with token:", token ? "Token present" : "No token");
 
-      const response = await axios.get("http://localhost:8000/company/dashboard", {
+      const response = await axios.get("/api/company/dashboard", {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json"
@@ -124,7 +124,7 @@ const CompanyDashboard = () => {
     setMonthlyLoading(true);
     const token = localStorage.getItem("company_token") || localStorage.getItem("face_verification_company_token");
 
-    const response = await axios.get("http://localhost:8000/company/monthly_dashboard", {
+    const response = await axios.get("/api/company/monthly_dashboard", {
       headers: {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json"
@@ -164,7 +164,7 @@ const safetyComparisonMonth = monthlyData?.safety_comparison || [];
       setWeeklyLoading(true);
       const token = localStorage.getItem("company_token") || localStorage.getItem("face_verification_company_token");
 
-      const response = await axios.get("http://localhost:8000/company/weekly_dashboard", {
+      const response = await axios.get("/api/company/weekly_dashboard", {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json"

@@ -1,9 +1,10 @@
 import React from 'react';
-import { Home, Award, Target, User } from 'lucide-react';
-import { Link, useLocation } from "react-router-dom";
+import { Home, Award, Target, User, LogOut } from 'lucide-react';
+import { Link, useLocation, useNavigate } from "react-router-dom";
 
 const EmployeeNavbar = ({ activePage }) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const path = location.pathname || "";
 
   const inferred = path.includes("/employee/reward")
@@ -17,6 +18,12 @@ const EmployeeNavbar = ({ activePage }) => {
     : "Dashboard";
 
   const current = activePage || inferred;
+
+  const handleLogout = () => {
+    localStorage.removeItem("employee_token");
+    localStorage.removeItem("employee_data");
+    navigate("/employee/login");
+  };
 
   return (
     <nav className="bg-white border-b border-gray-200 px-4 py-3 sm:px-6 sm:py-4">
@@ -49,6 +56,14 @@ const EmployeeNavbar = ({ activePage }) => {
             <span className="text-[10px] sm:text-xs">Profile</span>
           </button>
         </Link>
+
+        <button
+          onClick={handleLogout}
+          className="flex flex-col items-center gap-1 text-gray-400 hover:text-yellow-500 transition-colors"
+        >
+          <LogOut size={22} className="sm:size-6" />
+          <span className="text-[10px] sm:text-xs">Logout</span>
+        </button>
 
       </div>
     </nav>

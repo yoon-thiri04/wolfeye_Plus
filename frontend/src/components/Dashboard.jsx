@@ -20,7 +20,7 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const res = await axios.get("http://localhost:8000/detect/ppe_stats");
+        const res = await axios.get("/api/detect/ppe_stats");
         const data = res.data;
 
         setStats(data.ppe_stats || data);

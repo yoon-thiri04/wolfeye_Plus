@@ -5,7 +5,10 @@ numpy
 fastapi
 deepface
 pydantic
-multipart
+python-multipart
 uvicorn
 ultralytics
 redis
+passlib[bcrypt]
+python-jose
+tf-keras

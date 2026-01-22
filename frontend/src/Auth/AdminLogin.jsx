@@ -55,7 +55,7 @@ const AdminLogin = () => {
     try {
       console.log("Attempting login with:", formData.email);
 
-      const response = await axios.post("http://localhost:8000/login", {
+      const response = await axios.post("/api/login", {
         email: formData.email,
         password: formData.password
       });
@@ -201,6 +201,13 @@ const AdminLogin = () => {
               )}
             </button>
           </form>
+
+          <div className="mt-6 rounded-lg border border-indigo-100 bg-indigo-50 p-4">
+            <p className="text-sm font-semibold text-indigo-900">Register Accounts</p>
+            <p className="text-xs text-indigo-700 mt-1">
+              Sign in to create company accounts and provision employee access.
+            </p>
+          </div>
 
           <div className="mt-8 pt-6 border-t border-gray-200">
             <div className="bg-blue-50 rounded-lg p-4">

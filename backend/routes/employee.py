@@ -11,7 +11,6 @@ from backend.models.employee import EmployeeCreate, EmployeeResponse
 from backend.db import db
 import shutil
 import os
-from deepface import DeepFace
 from bson import ObjectId
 from PIL import Image
 from datetime import datetime,date, timedelta
@@ -54,6 +53,7 @@ async def create_employee_api(
         shutil.copyfileobj(image.file, buffer)
 
     print(file_path)
+    from deepface import DeepFace
     raw_result = DeepFace.represent(img_path=file_path)[0]
     print(raw_result)
     embedding_data = format_embedding_result(raw_result)
@@ -90,6 +90,7 @@ async def verify_employee(image: UploadFile = File(...), current_user: dict = De
         shutil.copyfileobj(image.file, f)
 
     try:
+        from deepface import DeepFace
         raw_results = DeepFace.represent(img_path=temp_path)
         if len(raw_results) > 1:
             return {
@@ -189,6 +190,7 @@ async def update_employee(
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(image.file, buffer)
 
+        from deepface import DeepFace
         raw_result = DeepFace.represent(img_path=file_path)[0]
         embedding_data = format_embedding_result(raw_result)
 

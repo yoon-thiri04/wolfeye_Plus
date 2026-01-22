@@ -41,26 +41,28 @@ const EmployeeLogin = () => {
     console.log("Attempting employee login with:", formData.email);
     setDebugInfo(`Attempting login for: ${formData.email}`);
 
-    const response = await axios.post("http://localhost:8000/login", {
+    const response = await axios.post("/api/login", {
       email: formData.email,
       password: formData.password
     });
 
     console.log("Login response:", response.data);
-    setDebugInfo(`Login successful! Role: ${response.data.user?.role}`);
+    const employeeData = response.data.employee || response.data.user;
+    const role = employeeData?.role || response.data.user_type;
+    setDebugInfo(`Login successful! Role: ${role}`);
 
     // Check if the logged-in user has employee role
-    if (response.data.user?.role !== "employee") {
+    if (role !== "employee") {
       const errorMsg = "This account is not an employee account. Please use the company login.";
       setError(errorMsg);
-      setDebugInfo(`Wrong user role: ${response.data.user?.role}`);
+      setDebugInfo(`Wrong user role: ${role}`);
       return;
     }
 
     // Handle employee data
     const responseData = response.data;
     const token = responseData.token;
-    const userData = responseData.user;
+    const userData = employeeData;
 
     if (!token || !userData) {
       throw new Error("Invalid response from server");
@@ -262,6 +264,20 @@ const EmployeeLogin = () => {
               )}
             </button>
           </form>
+
+          <div className="mt-6 rounded-lg border border-green-100 bg-green-50 p-4">
+            <p className="text-sm font-semibold text-green-900">Register Employee</p>
+            <p className="text-xs text-green-700 mt-1">
+              Employee accounts are created by your company. Ask your admin to enroll you.
+            </p>
+            <button
+              type="button"
+              onClick={() => navigate("/company/login")}
+              className="mt-3 text-xs font-semibold text-green-700 hover:text-green-900"
+            >
+              Go to Company Login
+            </button>
+          </div>
 
           <div className="mt-8 pt-6 border-t border-gray-200">
             <div className="bg-green-50 rounded-lg p-4">

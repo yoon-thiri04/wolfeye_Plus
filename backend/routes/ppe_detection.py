@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends
-import base64, io, json, time, uuid, redis
+import base64, io, json, time, uuid, redis, os
 from backend.utils.dependencies import company_required
 from ultralytics import YOLO
 from PIL import Image
@@ -12,7 +12,10 @@ PPE_CLASSES = ["helmet", "gloves", "vest", "goggles", "ear protection", "person"
 detect_router = APIRouter(prefix="/detect")
 
 model = YOLO("backend/routes/best.pt")
-r = redis.Redis(decode_responses=True)
+REDIS_HOST = os.getenv("REDIS_HOST", "redis")
+REDIS_PORT = int(os.getenv("REDIS_PORT", "6379"))
+REDIS_DB = int(os.getenv("REDIS_DB", "0"))
+r = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=REDIS_DB, decode_responses=True)
 
 STABLE_THRESHOLD = {"helmet": 1, "gloves": 1, "vest": 1, "goggles": 1, "ear protection": 1, "person": 1}
 MAX_ROUNDS = 6
