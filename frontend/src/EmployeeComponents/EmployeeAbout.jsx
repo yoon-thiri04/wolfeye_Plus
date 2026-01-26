@@ -5,8 +5,14 @@ import wolfMascot from "../assets/images/wolf-about.png";
 
 export default function EmployeeAbout() {
   return (
-    <section className="flex justify-center items-center py-20 px-6 bg-white overflow-visible">
-      <div className="relative max-w-6xl w-full flex flex-col lg:flex-row items-center bg-white border border-[#f28c3a] rounded-[36px] overflow-visible shadow-lg">
+    <section className="flex justify-center items-center py-20 px-6 bg-gradient-to-b from-white to-orange-50 overflow-visible relative">
+      {/* Decorative background elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-[10%] left-[5%] w-[20%] h-[20%] bg-orange-100/40 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-[10%] right-[5%] w-[25%] h-[25%] bg-blue-100/30 rounded-full blur-3xl"></div>
+      </div>
+
+      <div className="relative max-w-6xl w-full flex flex-col lg:flex-row items-center bg-white/80 backdrop-blur-xl border border-orange-200/50 rounded-[36px] overflow-visible shadow-2xl z-10">
 
         {/* Wolf Mascot */}
         <motion.div

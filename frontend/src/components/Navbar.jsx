@@ -37,60 +37,60 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="bg-white border-b border-gray-200 px-8 py-4">
+    <nav className="bg-white border-b border-gray-200 px-4 sm:px-8 py-4">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-8">
+        <div className="flex items-center gap-4 sm:gap-8 overflow-x-auto no-scrollbar">
           <button
             onClick={() => navigateWithToken("/")}
-            className={`flex items-center gap-2 transition-colors cursor-pointer ${
+            className={`flex items-center gap-2 transition-colors cursor-pointer shrink-0 ${
               currentPath === "/" 
                 ? "text-orange-500" 
                 : "text-gray-600 hover:text-gray-900"
             }`}
           >
             <Home className="w-5 h-5" />
-            <span className="text-sm">Home</span>
+            <span className="hidden sm:inline text-sm">Home</span>
           </button>
             <button
             onClick={() => navigateWithToken("/add")}
-            className={`flex items-center gap-2 transition-colors cursor-pointer ${
+            className={`flex items-center gap-2 transition-colors cursor-pointer shrink-0 ${
               currentPath === "/add" 
                 ? "text-orange-500" 
                 : "text-gray-600 hover:text-gray-900"
             }`}
           >
             <UserPlus className="w-5 h-5" />
-            <span className="text-sm">Enroll Employee</span>
+            <span className="hidden sm:inline text-sm">Enroll Employee</span>
           </button>
           <button
             onClick={() => navigateWithToken("/company/dashboard")}
-            className={`flex items-center gap-2 transition-colors cursor-pointer ${
+            className={`flex items-center gap-2 transition-colors cursor-pointer shrink-0 ${
               currentPath === "/company/dashboard" 
                 ? "text-orange-500" 
                 : "text-gray-600 hover:text-gray-900"
             }`}
           >
             <PanelTopDashedIcon className="w-5 h-5" />
-            <span className="text-sm font-medium">Employee Dashboard</span>
+            <span className="hidden sm:inline text-sm font-medium">Employee Dashboard</span>
           </button>
           <button
             onClick={() => navigateWithToken("/company/setting")}
-            className={`flex items-center gap-2 transition-colors cursor-pointer ${
+            className={`flex items-center gap-2 transition-colors cursor-pointer shrink-0 ${
               currentPath === "/company/setting" 
                 ? "text-orange-500" 
                 : "text-gray-600 hover:text-gray-900"
             }`}
           >
             <Settings className="w-5 h-5" />
-            <span className="text-sm">Settings</span>
+            <span className="hidden sm:inline text-sm">Settings</span>
           </button>
         </div>
         <button
           onClick={handleLogout}
-          className="flex items-center gap-2 transition-colors cursor-pointer text-gray-600 hover:text-gray-900"
+          className="flex items-center gap-2 transition-colors cursor-pointer text-gray-600 hover:text-gray-900 shrink-0 ml-4"
         >
           <LogOut className="w-5 h-5" />
-          <span className="text-sm">Logout</span>
+          <span className="hidden sm:inline text-sm">Logout</span>
         </button>
       </div>
     </nav>

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
 import base64, io, json, time, uuid, redis, os
 from backend.utils.dependencies import company_required
 from ultralytics import YOLO
@@ -25,19 +25,26 @@ EARLY_MISSING_CHECK_ROUNDS = 4
 
 @detect_router.post("/start_session")
 def start_session(req: StartSessionRequest):
-    session_id = str(uuid.uuid4())
-    session = {
-        "person_id": req.person_id,
-        "rounds": 0,
-        "detections_count": {cls: 0 for cls in PPE_CLASSES},
-        "ppe_status": {cls: False for cls in PPE_CLASSES},
-        "no_person_count": 0,
-        "last_seen_time": time.time(),
-    }
-    print(session)
-    print("Hi")
-    r.set(f"session:{session_id}", json.dumps(session), ex=60 * 5)
-    return {"session_id": session_id, "message": "Session started successfully."}
+    try:
+        session_id = str(uuid.uuid4())
+        session = {
+            "person_id": req.person_id,
+            "rounds": 0,
+            "detections_count": {cls: 0 for cls in PPE_CLASSES},
+            "ppe_status": {cls: False for cls in PPE_CLASSES},
+            "no_person_count": 0,
+            "last_seen_time": time.time(),
+        }
+        print(session)
+        print("Hi")
+        r.set(f"session:{session_id}", json.dumps(session), ex=60 * 5)
+        return {"session_id": session_id, "message": "Session started successfully."}
+    except redis.exceptions.ConnectionError as e:
+        print(f"Redis connection error: {e}")
+        raise HTTPException(status_code=503, detail="Failed to connect to Redis. Please check backend configuration.")
+    except Exception as e:
+        print(f"Error starting session: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @detect_router.post("/ppe_detect")

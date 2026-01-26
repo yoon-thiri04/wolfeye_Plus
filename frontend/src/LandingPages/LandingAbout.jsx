@@ -10,7 +10,7 @@ export default function LandingAbout() {
 
         {/* Wolf Mascot */}
         <motion.div
-          className="relative w-full lg:w-[40%] flex justify-center lg:justify-start -mt-16 lg:-mt-24 z-30"
+          className="relative w-full lg:w-[40%] flex justify-center lg:justify-start -mt-10 md:-mt-16 lg:-mt-24 z-30 mb-6 lg:mb-0"
           initial={{ opacity: 0, scale: 0.8, y: 40 }}
           whileInView={{ opacity: 1, scale: 1, y: 0 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
@@ -19,7 +19,7 @@ export default function LandingAbout() {
           <img
             src={wolfMascot}
             alt="Wolf Mascot"
-            className="w-[300px] lg:w-[380px] -ml-6 lg:-ml-10"
+            className="w-full max-w-[250px] md:max-w-[300px] lg:w-[380px] lg:max-w-none mx-auto lg:-ml-10 object-contain"
           />
         </motion.div>
 

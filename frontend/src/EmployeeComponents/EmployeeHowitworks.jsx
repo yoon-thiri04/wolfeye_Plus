@@ -57,10 +57,16 @@ const EmployeeHowItWorks = () => {
   ];
 
   return (
-    <section className="w-full py-20 bg-white text-center mt-20">
+    <section className="w-full py-20 bg-gradient-to-br from-orange-50 to-white text-center mt-20 relative overflow-hidden">
+      {/* Decorative background elements */}
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+        <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] bg-orange-200/20 rounded-full blur-3xl"></div>
+        <div className="absolute top-[40%] -right-[10%] w-[30%] h-[30%] bg-blue-200/20 rounded-full blur-3xl"></div>
+      </div>
+
       {/* Section Title */}
       <motion.h2
-        className="text-4xl font-bold mb-16"
+        className="text-4xl font-bold mb-16 relative z-10"
         initial={{ opacity: 0, y: 40 }}
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
@@ -71,11 +77,11 @@ const EmployeeHowItWorks = () => {
       </motion.h2>
 
       {/* Steps */}
-      <div className="flex flex-col md:flex-row justify-center items-center gap-16 px-6 md:px-20 relative">
+      <div className="flex flex-col md:flex-row justify-center items-center gap-16 px-6 md:px-20 relative z-10">
         {steps.map((step, index) => (
           <motion.div
             key={index}
-            className="flex flex-col items-center text-center max-w-xs relative"
+            className="flex flex-col items-center text-center max-w-xs relative bg-white/60 backdrop-blur-xl border border-white/50 p-6 rounded-3xl shadow-lg"
             initial={{ opacity: 0, y: 60, scale: 0.9 }}
             whileInView={{ opacity: 1, y: 0, scale: 1 }}
             transition={{

@@ -29,17 +29,17 @@ const Banner = () => {
         transition={{ duration: 0.6 }}
         viewport={{ once: false, amount: 0.3 }}
       >
-        <button className="p-2 rounded-full bg-black text-white hover:opacity-80 absolute left-0">
+        <button className="p-2 rounded-full bg-black text-white hover:opacity-80 absolute left-0 z-10">
           <ArrowLeft size={20} />
         </button>
 
-        <div className="flex items-center justify-center gap-12 flex-wrap px-12">
+        <div className="flex items-center justify-center gap-6 md:gap-12 flex-wrap px-12">
           {partners.map((p, i) => (
             <motion.img
               key={i}
               src={p.logo}
               alt={p.name}
-              className="h-25 w-auto grayscale hover:grayscale-0 transition"
+              className="h-16 md:h-25 w-auto grayscale hover:grayscale-0 transition"
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: i * 0.1 }}
@@ -48,14 +48,14 @@ const Banner = () => {
           ))}
         </div>
 
-        <button className="p-2 rounded-full bg-black text-white hover:opacity-80 absolute right-0">
+        <button className="p-2 rounded-full bg-black text-white hover:opacity-80 absolute right-0 z-10">
           <ArrowRight size={20} />
         </button>
       </motion.div>
 
       {/* Banner Section */}
       <motion.div
-        className="relative flex flex-col md:flex-row items-center bg-gray-50 rounded-3xl p-6 md:p-10 max-w-6xl shadow-sm"
+        className="relative flex flex-col md:flex-row items-center bg-white/70 backdrop-blur-2xl border border-white/50 rounded-3xl p-6 md:p-10 max-w-6xl shadow-[0_8px_32px_0_rgba(31,38,135,0.07)]"
         initial={{ opacity: 0, y: 50 }}
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
