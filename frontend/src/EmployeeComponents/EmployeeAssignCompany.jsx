@@ -12,7 +12,7 @@ const EmployeeAssignCompany = () => {
       <img
         src={snowflake}
         alt="background"
-        className="absolute inset-0 m-auto w-[799px] h-[841px] object-contain opacity-20 pointer-events-none z-0 mt-50"
+        className="absolute inset-0 m-auto w-full max-w-[799px] h-auto object-contain opacity-20 pointer-events-none z-0 mt-32 md:mt-48"
       />
 
       {/* Wolf mascot */}
@@ -26,7 +26,7 @@ const EmployeeAssignCompany = () => {
         <img
           src={wolflying}
           alt="Wolf mascot"
-          className="w-100 h-100 object-contain"
+          className="w-64 h-64 md:w-96 md:h-96 object-contain"
         />
       </motion.div>
 
@@ -61,7 +61,7 @@ const EmployeeAssignCompany = () => {
         viewport={{ once: true }}
       >
         {/* Location */}
-        <div className="flex flex-col p-5 rounded-xl border-2 border-l-9 border-[#4DDFFD] bg-white/60 backdrop-blur-sm shadow-sm hover:shadow-md transition-shadow">
+        <div className="flex flex-col p-5 rounded-xl border-2 border-l-[9px] border-[#4DDFFD] bg-white/60 backdrop-blur-sm shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center gap-3 mb-2">
             <div className="bg-[#7AE7FD] p-2 rounded-lg inline-flex items-center justify-center">
               <MapPin className="w-5 h-5" stroke="white" />
@@ -97,7 +97,7 @@ const EmployeeAssignCompany = () => {
         </div>
 
         {/* Active */}
-        <div className="flex flex-col p-5 rounded-xl border-2 border-l-9 border-[#FFA414] bg-white/60 backdrop-blur-sm shadow-sm hover:shadow-md transition-shadow">
+        <div className="flex flex-col p-5 rounded-xl border-2 border-l-[9px] border-[#FFA414] bg-white/60 backdrop-blur-sm shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center gap-3 mb-2">
             <div className="bg-[#FFA414] p-2 rounded-lg inline-flex items-center justify-center">
               <Eye className="w-5 h-5" stroke="white" />

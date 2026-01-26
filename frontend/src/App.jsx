@@ -76,10 +76,19 @@ const loginPathForRole = (role) => {
 const ProtectedRoute = ({ role, children }) => {
   const token = getTokenForRole(role);
   if (!token) return <Navigate to={loginPathForRole(role)} replace />;
-  const tokenRole = decodeToken(token)?.role;
+  
+  const decoded = decodeToken(token);
+  if (!decoded) {
+    // Invalid token, redirect to login
+    return <Navigate to={loginPathForRole(role)} replace />;
+  }
+
+  const tokenRole = decoded.role;
   const storedRole = getStoredRole(role);
+  
   if (tokenRole && tokenRole !== role) return <Navigate to={loginPathForRole(role)} replace />;
   if (!tokenRole && storedRole && storedRole !== role) return <Navigate to={loginPathForRole(role)} replace />;
+  
   return children;
 };
 

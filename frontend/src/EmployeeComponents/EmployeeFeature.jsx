@@ -29,18 +29,15 @@ const EmployeeFeature = () => {
   ];
 
   return (
-    <section className="w-full py-20 flex flex-col md:flex-row justify-between items-start px-6 md:px-0 gap-16 mt-30 relative mb-40">
-  {/* background image */}
-{/*  <img*/}
-{/*  src={snowflake}*/}
-{/*  alt="background"*/}
-{/*  className="absolute inset-0 m-auto w-[799px] h-[841px] object-contain opacity-20 pointer-events-none"*/}
-{/*/>*/}
-
+    <section className="w-full py-20 flex flex-col md:flex-row justify-between items-start px-6 md:px-0 gap-16 mt-20 relative mb-20 overflow-hidden bg-gradient-to-br from-white to-orange-50/50">
+      {/* Decorative background elements */}
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+        <div className="absolute top-[20%] right-0 w-[30%] h-[30%] bg-orange-100/30 rounded-full blur-3xl"></div>
+      </div>
 
       {/* LEFT SIDE CONTENT */}
       <motion.div
-        className="relative z-10 flex-1 max-w-lg text-left"
+        className="relative z-10 flex-1 max-w-lg text-left md:pl-20"
         initial={{ opacity: 0, x: -50 }}
         whileInView={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
@@ -68,16 +65,16 @@ const EmployeeFeature = () => {
       </motion.div>
 
       {/* RIGHT SIDE FEATURE LIST */}
-<div className="relative z-10 flex-1 md:w-[400px] lg:w-[400px] md:h-[198px] lg:h-[198px] space-y-6 ml-20">
+<div className="relative z-10 flex-1 w-full md:w-auto space-y-6 md:ml-20">
   {features.map((feature, index) => {
     const isActive = active === index;
     return (
       <motion.div
         key={index}
-        className={`relative rounded-[2rem] p-8 transition-all duration-300 cursor-pointer w-[565px] ${
+        className={`relative rounded-[2rem] p-6 md:p-8 transition-all duration-300 cursor-pointer w-full md:max-w-[500px] lg:max-w-[565px] backdrop-blur-md border ${
           isActive
-            ? "bg-[#ea7c3b] text-white"
-            : "bg-[#F5F5F5] text-black hover:bg-white/90"
+            ? "bg-[#ea7c3b] text-white border-[#ea7c3b] shadow-xl"
+            : "bg-white/60 text-gray-900 border-white/50 hover:bg-white/80 hover:shadow-lg"
         }`}
         onClick={() => setActive(isActive ? null : index)}
         initial={{ opacity: 0, y: 50 }}

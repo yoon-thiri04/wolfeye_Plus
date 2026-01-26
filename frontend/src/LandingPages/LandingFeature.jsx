@@ -35,7 +35,7 @@ const LandingFeature = () => {
   <img
   src={snowflake}
   alt="background"
-  className="absolute inset-0 m-auto w-[799px] h-[841px] object-contain opacity-20 pointer-events-none"
+  className="absolute inset-0 m-auto w-full max-w-[799px] h-auto max-h-[841px] object-contain opacity-20 pointer-events-none"
 />
 
 
@@ -69,13 +69,13 @@ const LandingFeature = () => {
       </motion.div>
 
       {/* RIGHT SIDE FEATURE LIST */}
-<div className="relative z-10 flex-1 md:w-[400px] lg:w-[400px] md:h-[198px] lg:h-[198px] space-y-6 ml-20">
+<div className="relative z-10 flex-1 w-full max-w-lg space-y-6 lg:ml-20">
   {features.map((feature, index) => {
     const isActive = active === index;
     return (
       <motion.div
         key={index}
-        className={`relative rounded-[2rem] p-8 transition-all duration-300 cursor-pointer w-[565px] ${
+        className={`relative rounded-[2rem] p-8 transition-all duration-300 cursor-pointer w-full ${
           isActive
             ? "bg-[#ea7c3b] text-white"
             : "bg-[#F5F5F5] text-black hover:bg-white/90"

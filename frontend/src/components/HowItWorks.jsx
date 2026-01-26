@@ -58,10 +58,16 @@ const HowItWorks = () => {
   ];
 
   return (
-    <section className="w-full py-20 bg-white text-center mt-20">
+    <section className="w-full py-20 bg-gradient-to-br from-orange-50 to-white text-center mt-20 relative overflow-hidden">
+      {/* Decorative background elements */}
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+        <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] bg-orange-200/20 rounded-full blur-3xl"></div>
+        <div className="absolute top-[40%] -right-[10%] w-[30%] h-[30%] bg-blue-200/20 rounded-full blur-3xl"></div>
+      </div>
+
       {/* Section Title */}
       <motion.h2
-        className="text-4xl font-bold mb-16"
+        className="text-3xl md:text-4xl font-bold mb-12 md:mb-16"
         initial={{ opacity: 0, y: 40 }}
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: "easeOut" }}

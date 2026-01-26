@@ -72,7 +72,7 @@ const LandingHowItWorks = () => {
       </motion.h2>
 
       {/* Steps */}
-      <div className="flex flex-col md:flex-row justify-center items-center gap-16 px-6 md:px-20 relative">
+      <div className="flex flex-col lg:flex-row justify-center items-center gap-16 px-6 md:px-20 relative">
         {steps.map((step, index) => (
           <motion.div
             key={index}
@@ -104,7 +104,7 @@ const LandingHowItWorks = () => {
               <>
                 {/* Dotted gradient line */}
                 <div
-                  className={`hidden md:block absolute top-10 right-[-140px] w-[140px] h-[2px] bg-gradient-to-r ${step.connector} opacity-70`}
+                  className={`hidden lg:block absolute top-10 right-[-140px] w-[140px] h-[2px] bg-gradient-to-r ${step.connector} opacity-70`}
                   style={{
                     maskImage:
                       "repeating-linear-gradient(to right, black 0 6px, transparent 6px 12px)",
@@ -115,12 +115,12 @@ const LandingHowItWorks = () => {
 
                 {/* Circle at start of connector */}
                 <div
-                  className={`hidden md:block absolute top-9 right-[-2px] w-4 h-4 rounded-full border-2 border-white ${step.circleStart} shadow-md`}
+                  className={`hidden lg:block absolute top-9 right-[-2px] w-4 h-4 rounded-full border-2 border-white ${step.circleStart} shadow-md`}
                 ></div>
 
                 {/* Circle at end of connector */}
                 <div
-                  className={`hidden md:block absolute top-9 right-[-142px] w-4 h-4 rounded-full border-2 border-white ${step.circleEnd} shadow-md`}
+                  className={`hidden lg:block absolute top-9 right-[-142px] w-4 h-4 rounded-full border-2 border-white ${step.circleEnd} shadow-md`}
                 ></div>
               </>
             )}

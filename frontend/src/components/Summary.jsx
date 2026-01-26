@@ -45,57 +45,57 @@ export default function Summary() {
   const points = employeeData.earn || 0;
 
   return (
-    <div className="min-h-screen bg-white flex items-center justify-center p-8">
-      <div className="max-w-6xl w-full flex gap-12 items-center">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-white flex items-center justify-center p-4 md:p-8">
+      <div className="max-w-6xl w-full flex flex-col lg:flex-row gap-8 lg:gap-12 items-center">
         {/* Wolf Image */}
-        <div className="flex-shrink-0">
+        <div className="flex-shrink-0 w-full lg:w-auto flex justify-center lg:justify-start">
           <img
             src={wolf}
             alt="Construction Worker"
-            className="w-140 h-auto object-contain"
+            className="w-64 md:w-96 lg:w-[500px] h-auto object-contain drop-shadow-2xl"
           />
         </div>
 
-        <div className="flex-1">
+        <div className="flex-1 w-full">
           <h1
-            className="text-5xl font-bold mb-6 text-left"
+            className="text-3xl md:text-5xl font-bold mb-6 text-left"
             style={{ fontFamily: "Plus Jakarta Sans" }}
           >
-            <span className="text-orange-500">Welcome</span>
-            <span className="text-black"> from</span>
+            <span className="text-[#ea7c3b]">Welcome</span>
+            <span className="text-gray-900"> from</span>
             <br />
-            <span className="text-black">Construction Site!</span>
+            <span className="text-gray-900">Construction Site!</span>
           </h1>
 
-          <p className="text-gray-600 text-base leading-relaxed mb-8 text-left">
+          <p className="text-gray-600 text-base leading-relaxed mb-8 text-left max-w-xl">
             All your safety gear has been successfully verified, and your attendance is recorded. Now you're ready to begin a productive and secure workday with WolfEye+.
           </p>
 
           {/* Employee Details */}
-          <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6 text-left">
-            <h2 className="text-lg font-semibold mb-4">Employee Details</h2>
+          <div className="bg-white/80 backdrop-blur-xl border border-white/50 rounded-2xl p-6 mb-6 text-left shadow-lg">
+            <h2 className="text-lg font-semibold mb-4 text-gray-900">Employee Details</h2>
 
             <div className="space-y-3">
-              <div className="flex justify-between items-center">
+              <div className="flex justify-between items-center p-3 bg-white/50 rounded-xl">
                 <span className="text-gray-600">Email:</span>
-                <span className="font-medium">{employeeData.name}</span>
+                <span className="font-medium text-gray-900">{employeeData.name}</span>
               </div>
 
-              <div className="flex justify-between items-center">
+              <div className="flex justify-between items-center p-3 bg-white/50 rounded-xl">
                 <span className="text-gray-600">Status:</span>
-                <span className="bg-green-500 text-white px-3 py-1 rounded text-sm font-medium">
+                <span className="bg-green-100 text-green-700 px-3 py-1 rounded-lg text-sm font-semibold">
                   {employeeData.status}
                 </span>
               </div>
 
-              <div className="flex justify-between items-center">
+              <div className="flex justify-between items-center p-3 bg-white/50 rounded-xl">
                 <span className="text-gray-600">Check-In:</span>
-                <span className="font-medium">{employeeData.checkIn}</span>
+                <span className="font-medium text-gray-900">{employeeData.checkIn}</span>
               </div>
 
-              <div className="flex justify-between items-center">
+              <div className="flex justify-between items-center p-3 bg-white/50 rounded-xl">
                 <span className="text-gray-600">Earn:</span>
-                <span className="font-medium">{points} Points</span>
+                <span className="font-bold text-[#ea7c3b]">{points} Points</span>
               </div>
             </div>
           </div>
