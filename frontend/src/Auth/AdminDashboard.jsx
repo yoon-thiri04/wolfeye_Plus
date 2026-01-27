@@ -110,6 +110,31 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleDoorLock = async () => {
+    const deviceId = doorDeviceId.trim() || "DOOR_001";
+    setDoorLoading(true);
+    setDoorStatus("");
+    setDoorError("");
+    try {
+      const res = await fetch("/api/iot/trigger_lock", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ device_id: deviceId, duration: 5000 })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data?.message || "Failed to send lock command");
+      }
+      setDoorStatus(data?.message || `Lock command sent to ${deviceId}`);
+    } catch (err) {
+      setDoorError(err?.message || "Failed to send lock command");
+    } finally {
+      setDoorLoading(false);
+    }
+  };
+
   const filteredCompanies = companies.filter(company => 
     company.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     company.email.toLowerCase().includes(searchTerm.toLowerCase())
@@ -235,7 +260,7 @@ const AdminDashboard = () => {
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
               <div>
                 <h2 className="text-lg sm:text-xl font-bold text-gray-900">Door Lock Test</h2>
-                <p className="text-sm text-gray-500">Send a one-time unlock command to a device.</p>
+                <p className="text-sm text-gray-500">Send a one-time unlock or lock command to a device.</p>
               </div>
               <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
                 <input
@@ -250,6 +275,13 @@ const AdminDashboard = () => {
                   className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-orange-500 to-amber-600 text-white text-sm font-semibold shadow-lg shadow-orange-500/20 hover:shadow-xl hover:shadow-orange-500/30 transition-all duration-300 disabled:opacity-60"
                 >
                   {doorLoading ? "Sending..." : "Unlock Door"}
+                </button>
+                <button
+                  onClick={handleDoorLock}
+                  disabled={doorLoading}
+                  className="px-5 py-2.5 rounded-xl bg-white text-gray-700 text-sm font-semibold border border-gray-200 shadow-sm hover:border-orange-200 hover:text-orange-600 transition-all duration-300 disabled:opacity-60"
+                >
+                  {doorLoading ? "Sending..." : "Lock Door"}
                 </button>
               </div>
             </div>
