@@ -26,6 +26,10 @@ const AdminDashboard = () => {
   const [successMessage, setSuccessMessage] = useState("");
   const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
+  const [doorDeviceId, setDoorDeviceId] = useState("DOOR_001");
+  const [doorLoading, setDoorLoading] = useState(false);
+  const [doorStatus, setDoorStatus] = useState("");
+  const [doorError, setDoorError] = useState("");
   const navigate = useNavigate();
 
   const [companyForm, setCompanyForm] = useState({
@@ -79,6 +83,31 @@ const AdminDashboard = () => {
       [name]: value
     }));
     if (error) setError("");
+  };
+
+  const handleDoorUnlock = async () => {
+    const deviceId = doorDeviceId.trim() || "DOOR_001";
+    setDoorLoading(true);
+    setDoorStatus("");
+    setDoorError("");
+    try {
+      const res = await fetch("/api/iot/trigger_unlock", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ device_id: deviceId, duration: 5000 })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data?.message || "Failed to send unlock command");
+      }
+      setDoorStatus(data?.message || `Unlock command sent to ${deviceId}`);
+    } catch (err) {
+      setDoorError(err?.message || "Failed to send unlock command");
+    } finally {
+      setDoorLoading(false);
+    }
   };
 
   const filteredCompanies = companies.filter(company => 
@@ -196,6 +225,41 @@ const AdminDashboard = () => {
               </div>
             </motion.div>
           </div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.35 }}
+            className="bg-white/70 backdrop-blur-xl rounded-[2rem] p-6 shadow-sm border border-white/70 mb-8"
+          >
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+              <div>
+                <h2 className="text-lg sm:text-xl font-bold text-gray-900">Door Lock Test</h2>
+                <p className="text-sm text-gray-500">Send a one-time unlock command to a device.</p>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+                <input
+                  value={doorDeviceId}
+                  onChange={(e) => setDoorDeviceId(e.target.value)}
+                  placeholder="Device ID"
+                  className="w-full sm:w-64 px-4 py-2.5 rounded-xl border border-gray-200 focus:border-orange-400 focus:ring-2 focus:ring-orange-200 bg-white/90 text-sm"
+                />
+                <button
+                  onClick={handleDoorUnlock}
+                  disabled={doorLoading}
+                  className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-orange-500 to-amber-600 text-white text-sm font-semibold shadow-lg shadow-orange-500/20 hover:shadow-xl hover:shadow-orange-500/30 transition-all duration-300 disabled:opacity-60"
+                >
+                  {doorLoading ? "Sending..." : "Unlock Door"}
+                </button>
+              </div>
+            </div>
+            {(doorStatus || doorError) && (
+              <div className="mt-4 text-sm">
+                {doorStatus && <p className="text-green-700">{doorStatus}</p>}
+                {doorError && <p className="text-red-600">{doorError}</p>}
+              </div>
+            )}
+          </motion.div>
 
           {/* Main Container */}
           <div className="bg-white/60 backdrop-blur-xl rounded-[2.5rem] shadow-xl shadow-orange-500/5 border border-white overflow-hidden">
