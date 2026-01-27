@@ -45,15 +45,18 @@ void loop() {
       String payload = http.getString();
       Serial.println(payload);
       
-      // Expected JSON response: {"unlock": true, "duration": 5000}
-      if (payload.indexOf("\"unlock\":true") > 0) {
+      if (payload.indexOf("\"force_lock\":true") > 0) {
+        Serial.println("Locking Door...");
+        digitalWrite(SOLENOID_PIN, LOW);
+        sendLockAck(device_id);
+      } else if (payload.indexOf("\"unlock\":true") > 0) {
         Serial.println("Unlocking Door...");
-        digitalWrite(SOLENOID_PIN, HIGH); // Unlock
-        delay(5000); // Keep open for 5 seconds
-        digitalWrite(SOLENOID_PIN, LOW);  // Lock again
-        
-        // Optional: Send acknowledgement back to server
+        digitalWrite(SOLENOID_PIN, HIGH);
+        delay(5000);
+        digitalWrite(SOLENOID_PIN, LOW);
+        sendUnlockAck(device_id);
       }
+
     } else {
       Serial.printf("HTTP GET failed, error: %s\n", http.errorToString(httpCode).c_str());
     }
