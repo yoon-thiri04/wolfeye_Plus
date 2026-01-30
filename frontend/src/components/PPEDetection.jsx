@@ -51,15 +51,27 @@ export default function PPEDetection() {
   const speakNext = () => {
   if (speechQueueRef.current.length === 0) {
     isSpeakingRef.current = false;
-    return;
+       return;
   }
 
   isSpeakingRef.current = true;
   const nextItem = speechQueueRef.current.shift();
-  const msg = new SpeechSynthesisUtterance(`Please show your ${nextItem} clearly`);
-  msg.rate = 1;
+  
+  // Translation map for PPE items
+  const ppeTranslations = {
+    "helmet": "ဦးထုပ်",
+    "gloves": "လက်အိတ်",
+    "vest": "အင်္ကျီ",
+    "goggles": "မျက်မှန်",
+    "ear protection": "နားကြပ်",
+    "boots": "ဖိနပ်",
+    "person": "လူ"
+  };
 
-  msg.onend = () => {
+  const translatedItem = ppeTranslations[nextItem] || nextItem;
+  const msg = new SpeechSynthesisUtterance(`ကျေးဇူးပြု၍ သင့်${translatedItem}ကို သေချာပြပါ`);
+  msg.lang = 'my-MM';
+  msg.rate = 1;msg.onend = () => {
     setTimeout(() => {
       speakNext();
     }, 1500);
