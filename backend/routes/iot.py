@@ -31,7 +31,7 @@ async def trigger_unlock(req: UnlockRequest):
     
     # Set the key with a short expiration (e.g., 10 seconds)
     # The value 'true' indicates pending unlock command
-    r.set(key, "true", ex=10)
+    r.set(key, str(req.duration), ex=10)
     
     return {"status": "success", "message": f"Unlock command sent to {req.device_id}"}
 
@@ -46,7 +46,7 @@ async def trigger_lock(req: LockRequest):
     
     # Set the key with a short expiration (e.g., 10 seconds)
     # The value 'true' indicates pending lock command
-    r.set(key, "true", ex=10)
+    r.set(key, str(req.duration), ex=10)
     
     return {"status": "success", "message": f"Lock command sent to {req.device_id}"}
 
@@ -61,12 +61,15 @@ async def check_access(device_id: str):
     should_unlock = r.get(unlock_key)
     should_lock = r.get(lock_key)
     
-    if should_unlock == "true":
-        # Delete key so it only unlocks once per request
+    if should_unlock:
         r.delete(unlock_key)
-        return {"unlock": True, "duration": 5000}
+        try:
+            duration_ms = int(should_unlock)
+        except ValueError:
+            duration_ms = 5000
+        return {"unlock": True, "duration": duration_ms}
     
-    if should_lock == "true":
+    if should_lock:
         r.delete(lock_key)
         return {"unlock": False, "force_lock": True}
     

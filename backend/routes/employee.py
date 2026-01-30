@@ -406,12 +406,23 @@ async def dashboard(current_user: dict = Depends(employee_required)):
                 most_missed_item = None
                 best_compliance_item = None
 
+            # Calculate Safety Score
+            total_true = sum(data["true_count"].values())
+            total_violations = data["violations"]
+            total_checks = total_true + total_violations
+
+            if total_checks > 0:
+                safety_score = (total_true / total_checks) * 100
+            else:
+                safety_score = 0
+
             weekly_summary[week] = {
                 "violations": data["violations"],
                 "most_missed_item": most_missed_item,
                 "best_compliance_item": best_compliance_item,
                 "days_count": data["days_count"],
-                "bar_chart_data": dict(data["missed_items_count"])  # Convert defaultdict to dict
+                "bar_chart_data": dict(data["missed_items_count"]),  # Convert defaultdict to dict
+                "safety_score": round(safety_score, 1)
             }
 
         # Create response data and serialize it properly
