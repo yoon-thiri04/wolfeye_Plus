@@ -13,6 +13,20 @@ const String device_id = "DOOR_001";
 // Hardware Configuration
 const int SOLENOID_PIN = 5; // D1 on NodeMCU
 const int CHECK_INTERVAL = 3000; // Check every 3 seconds
+bool isUnlocked = false;
+unsigned long unlockUntil = 0;
+
+int readDuration(const String& payload) {
+  int index = payload.indexOf("\"duration\":");
+  if (index < 0) return 5000;
+  int start = index + 11;
+  int end = start;
+  while (end < payload.length() && isDigit(payload.charAt(end))) {
+    end++;
+  }
+  if (end == start) return 5000;
+  return payload.substring(start, end).toInt();
+}
 
 void setup() {
   Serial.begin(115200);
@@ -48,12 +62,19 @@ void loop() {
       if (payload.indexOf("\"force_lock\":true") > 0) {
         Serial.println("Locking Door...");
         digitalWrite(SOLENOID_PIN, LOW);
+        isUnlocked = false;
+        unlockUntil = 0;
         sendLockAck(device_id);
       } else if (payload.indexOf("\"unlock\":true") > 0) {
         Serial.println("Unlocking Door...");
+        int unlockDuration = readDuration(payload);
         digitalWrite(SOLENOID_PIN, HIGH);
-        delay(5000);
-        digitalWrite(SOLENOID_PIN, LOW);
+        isUnlocked = true;
+        if (unlockDuration > 0) {
+          unlockUntil = millis() + unlockDuration;
+        } else {
+          unlockUntil = 0;
+        }
         sendUnlockAck(device_id);
       }
 
@@ -65,5 +86,11 @@ void loop() {
     Serial.println("WiFi Disconnected");
   }
   
+  if (isUnlocked && unlockUntil > 0 && millis() >= unlockUntil) {
+    digitalWrite(SOLENOID_PIN, LOW);
+    isUnlocked = false;
+    unlockUntil = 0;
+  }
+
   delay(CHECK_INTERVAL);
 }

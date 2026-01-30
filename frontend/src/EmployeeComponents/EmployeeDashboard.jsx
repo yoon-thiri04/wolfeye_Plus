@@ -36,7 +36,7 @@ const EmployeeDashboard = () => {
           'Authorization': `Bearer ${token}`
         }
       });
-
+      console.log(response)
       setDashboardData(response.data);
     } catch (err) {
       console.error("Failed to fetch dashboard data:", err);
@@ -94,7 +94,21 @@ const EmployeeDashboard = () => {
   
   // Calculate stats for cards
   const attendanceRate = parseFloat(attendance.monthly_average) || 0;
-  const safetyScore = Math.max(0, 100 - (ppe.weekly_summary?.[getWeekNumber(currentDate)]?.violations || 0) * 5); // Rough calc
+  
+  const currentWeekData = ppe.weekly_summary?.[getWeekNumber(currentDate)];
+  let safetyScore = 0;
+
+  if (currentWeekData?.safety_score !== undefined) {
+    safetyScore = currentWeekData.safety_score;
+  } else if (currentWeekData) {
+    // Fallback: Calculate from violations assuming 5 PPE items per day
+    const totalChecks = (currentWeekData.days_count || 0) * 5;
+    const violations = currentWeekData.violations || 0;
+    if (totalChecks > 0) {
+      safetyScore = Math.max(0, ((totalChecks - violations) / totalChecks) * 100);
+    }
+  }
+
 
   // Chart Data Preparation
   const weeklyData = ppe.weekly_summary[getWeekNumber(currentDate)] || {};
@@ -419,9 +433,19 @@ const EmployeeDashboard = () => {
 
 // Helper Functions
 const getWeekNumber = (date) => {
-  const firstDayOfYear = new Date(date.getFullYear(), 0, 1);
-  const pastDaysOfYear = (date - firstDayOfYear) / 86400000;
-  return Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
+  const target = new Date(date.valueOf());
+  console.log('target', target)
+  const dayNr = (date.getDay() + 6) % 7;
+  console.log('dayNr', dayNr)
+  target.setDate(target.getDate() - dayNr + 3);
+  const firstThursday = target.valueOf();
+  console.log('firstThursday', firstThursday)
+  target.setMonth(0, 1);
+  console.log('target', target)
+  if (target.getDay() !== 4) {
+    target.setMonth(0, 1 + ((4 - target.getDay()) + 7) % 7);
+  }
+  return 1 + Math.ceil((firstThursday - target) / 604800000);
 };
 
 const CalendarView = ({ attendance, currentYear, currentMonth }) => {
