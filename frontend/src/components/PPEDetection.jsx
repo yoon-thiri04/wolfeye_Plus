@@ -3,8 +3,8 @@ import Webcam from "react-webcam";
 import axios from "axios";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Camera, Wifi, Sun, Bell, User } from "lucide-react";
-import ppeIncompleteSound from '../assets/sound effect/ppe-not-success.mp3';
-import ppeCompleteSound from '../assets/sound effect/ppe-success.mp3';
+import ppeIncompleteSound from '../assets/sound_effect/ppe-not-success.mp3';
+import ppeCompleteSound from '../assets/sound_effect/ppe-success.mp3';
 
 export default function PPEDetection() {
   const webcamRef = useRef(null);
