@@ -3,6 +3,8 @@ import Webcam from "react-webcam";
 import axios from "axios";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Camera, Wifi, Sun, Bell, User } from "lucide-react";
+import ppeIncompleteSound from '../assets/sound effect/ppe-not-success.mp3';
+import ppeCompleteSound from '../assets/sound effect/ppe-success.mp3';
 
 export default function PPEDetection() {
   const webcamRef = useRef(null);
@@ -194,7 +196,7 @@ export default function PPEDetection() {
           };
           window.speechSynthesis.speak(warningMsg);
 
-          const response = axios.post("api/iot/trigger_lock", {
+          const response = axios.post("api/iot/trigger_unlock", {
               device_id: "DOOR_001",
               duration: 5000
           });
@@ -221,7 +223,7 @@ export default function PPEDetection() {
 
             console.log("PPE complete - going to summary. Remaining employees:", remainingEmployees);
 
-            const response = axios.post("api/iot/trigger_unlock", {
+            const response = axios.post("api/iot/trigger_lock", {
                 device_id: "DOOR_001",
                 duration: 5000
             });
