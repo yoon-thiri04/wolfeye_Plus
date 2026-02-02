@@ -7,9 +7,9 @@ import ppeIncompleteSound from '../assets/sound_effect/ppe-not-success.mp3';
 import ppeCompleteSound from '../assets/sound_effect/ppe-success.mp3';
 import glove from "../assets/sound_effect/pls-show-ur-gloves.mp3";
 import google from "../assets/sound_effect/pls-show-ur-googles.mp3";
-import hat from "../assets/sound_effect/pls-show-ur-hat-clearly.mp3";
+import hat from "../assets/sound_effect/pls-show-ur-hat-cleary.mp3";
 import vest from "../assets/sound_effect/pls-show-ur-vest.mp3";
-import earprotection from "../assets/sound_effect/pls-show-ur-ear-pro-clearly.mp3";
+import earprotection from "../assets/sound_effect/pls_show_ur_ear-pro_clearly.mp3";
 
 export default function PPEDetection() {
   const webcamRef = useRef(null);
