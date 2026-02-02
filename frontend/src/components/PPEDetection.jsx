@@ -5,6 +5,11 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { Camera, Wifi, Sun, Bell, User } from "lucide-react";
 import ppeIncompleteSound from '../assets/sound_effect/ppe-not-success.mp3';
 import ppeCompleteSound from '../assets/sound_effect/ppe-success.mp3';
+import glove from "../assets/sound_effect/pls-show-ur-gloves.mp3";
+import google from "../assets/sound_effect/pls-show-ur-googles.mp3";
+import hat from "../assets/sound_effect/pls-show-ur-hat-clearly.mp3";
+import vest from "../assets/sound_effect/pls-show-ur-vest.mp3";
+import earprotection from "../assets/sound_effect/pls-show-ur-ear-pro-clearly.mp3";
 
 export default function PPEDetection() {
   const webcamRef = useRef(null);
@@ -26,6 +31,25 @@ export default function PPEDetection() {
   const speechQueueRef = useRef([]);
   const isSpeakingRef = useRef(false);
   const [sessionError, setSessionError] = useState(false);
+
+  // Create audio objects for each sound file
+  const audioRefs = useRef({
+    ppeIncomplete: new Audio(ppeIncompleteSound),
+    ppeComplete: new Audio(ppeCompleteSound),
+    gloves: new Audio(glove),
+    goggles: new Audio(google),
+    helmet: new Audio(hat),
+    vest: new Audio(vest),
+    earprotection: new Audio(earprotection)
+  });
+
+  // Initialize audio properties
+  useEffect(() => {
+    Object.values(audioRefs.current).forEach(audio => {
+      audio.preload = 'auto';
+      audio.volume = 1.0;
+    });
+  }, []);
 
   // Get company authentication token
   const getCompanyAuthToken = () => {
@@ -51,25 +75,56 @@ export default function PPEDetection() {
   );
 
   const speakNext = () => {
-  if (speechQueueRef.current.length === 0) {
-    isSpeakingRef.current = false;
-    return;
-  }
+    if (speechQueueRef.current.length === 0) {
+      isSpeakingRef.current = false;
+      return;
+    }
 
-  isSpeakingRef.current = true;
-  const nextItem = speechQueueRef.current.shift();
-  const msg = new SpeechSynthesisUtterance(`Please show your ${nextItem} clearly`);
-  msg.rate = 1;
-  msg.lang = 'en-US';
-  msg.onend = () => {
-    setTimeout(() => {
-      speakNext();
-    }, 1500);
+    isSpeakingRef.current = true;
+    const nextItem = speechQueueRef.current.shift();
+
+    // Map missing items to corresponding audio files
+    const audioMap = {
+      'gloves': 'gloves',
+      'goggles': 'goggles',
+      'helmet': 'helmet',
+      'vest': 'vest',
+      'ear_protection': 'earprotection'
+    };
+
+    const audioKey = audioMap[nextItem];
+    if (audioKey && audioRefs.current[audioKey]) {
+      const audio = audioRefs.current[audioKey];
+
+      // Reset audio to start if already playing
+      audio.currentTime = 0;
+
+      // Play the audio
+      audio.play().catch(error => {
+        console.error('Error playing audio:', error);
+        isSpeakingRef.current = false;
+        speakNext();
+      });
+
+      // When audio ends, wait and play next
+      audio.onended = () => {
+        setTimeout(() => {
+          speakNext();
+        }, 1000);
+      };
+    } else {
+      // Fallback to text-to-speech if audio not found
+      const msg = new SpeechSynthesisUtterance(`Please show your ${nextItem} clearly`);
+      msg.rate = 1;
+      msg.lang = 'en-US';
+      msg.onend = () => {
+        setTimeout(() => {
+          speakNext();
+        }, 1500);
+      };
+      window.speechSynthesis.speak(msg);
+    }
   };
-
-  window.speechSynthesis.speak(msg);
-};
-
 
   const startSession = async (personEmail) => {
     if (!personEmail) return;
@@ -177,12 +232,12 @@ export default function PPEDetection() {
 
         // PPE not complete when miss 3 or above 3 items
         if (missingCount >= 3) {
-          const warningMsg = new SpeechSynthesisUtterance(
-            "Your PPE detection is not complete. Please wear missing items properly and make redetection."
-          );
-          warningMsg.rate = 1;
+          const audio = audioRefs.current.ppeIncomplete;
 
-          warningMsg.onend = () => {
+          // Reset audio to start if already playing
+          audio.currentTime = 0;
+
+          audio.onended = () => {
             console.log("PPE incomplete - navigating. Remaining employees:", remainingEmployees);
             // If no employees remaining, go to homepage
             if (remainingEmployees <= 0) {
@@ -194,7 +249,27 @@ export default function PPEDetection() {
               navigate("/facewebcam");
             }
           };
-          window.speechSynthesis.speak(warningMsg);
+
+          audio.play().catch(error => {
+            console.error('Error playing PPE incomplete audio:', error);
+            // Fallback to text-to-speech if audio fails
+            const warningMsg = new SpeechSynthesisUtterance(
+              "Your PPE detection is not complete. Please wear missing items properly and make redetection."
+            );
+            warningMsg.rate = 1;
+            warningMsg.onend = () => {
+              console.log("PPE incomplete - navigating. Remaining employees:", remainingEmployees);
+              if (remainingEmployees <= 0) {
+                console.log("No employees remaining, going to homepage");
+                navigate("/facewebcam");
+              }
+              else {
+                console.log("Employees remaining, going to facewebcam");
+                navigate("/facewebcam");
+              }
+            };
+            window.speechSynthesis.speak(warningMsg);
+          });
 
           const response = axios.post("api/iot/trigger_unlock", {
               device_id: "DOOR_001",
@@ -204,10 +279,12 @@ export default function PPEDetection() {
         }
         // PPE complete when less than 3 missing items
         else {
-          const completeMsg = new SpeechSynthesisUtterance("PPE detection complete");
-          completeMsg.rate = 1;
+          const audio = audioRefs.current.ppeComplete;
 
-          completeMsg.onend = () => {
+          // Reset audio to start if already playing
+          audio.currentTime = 0;
+
+          audio.onended = () => {
             const ppeItems = data.ppe_status || {};
             const totalItems = Object.keys(ppeItems).length;
             const wornItems = Object.values(ppeItems).filter(Boolean).length;
@@ -235,10 +312,44 @@ export default function PPEDetection() {
                 remainingEmployees
               }
             });
-
           };
 
-          window.speechSynthesis.speak(completeMsg);
+          audio.play().catch(error => {
+            console.error('Error playing PPE complete audio:', error);
+            // Fallback to text-to-speech if audio fails
+            const completeMsg = new SpeechSynthesisUtterance("PPE detection complete");
+            completeMsg.rate = 1;
+            completeMsg.onend = () => {
+              const ppeItems = data.ppe_status || {};
+              const totalItems = Object.keys(ppeItems).length;
+              const wornItems = Object.values(ppeItems).filter(Boolean).length;
+              const points = wornItems * (100 / totalItems);
+
+              const employeeData = {
+                  name: data.person_info?.name || email,
+                  status: "Attend",
+                  checkIn: checkInTime,
+                  earn: data.points || 0,
+                  ppeItems: ppeItems,
+              };
+
+              console.log("PPE complete - going to summary. Remaining employees:", remainingEmployees);
+
+              const response = axios.post("api/iot/trigger_lock", {
+                  device_id: "DOOR_001",
+                  duration: 5000
+              });
+              console.log(response)
+
+              navigate("/summary", {
+                state: {
+                  employeeData,
+                  remainingEmployees
+                }
+              });
+            };
+            window.speechSynthesis.speak(completeMsg);
+          });
         }
       }
     } catch (err) {
