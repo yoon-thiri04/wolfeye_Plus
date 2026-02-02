@@ -58,7 +58,7 @@ export default function PPEDetection() {
   const nextItem = speechQueueRef.current.shift();
   const msg = new SpeechSynthesisUtterance(`Please show your ${nextItem} clearly`);
   msg.rate = 1;
-
+  msg.lang = 'en-US';
   msg.onend = () => {
     setTimeout(() => {
       speakNext();
@@ -193,6 +193,12 @@ export default function PPEDetection() {
             }
           };
           window.speechSynthesis.speak(warningMsg);
+
+          const response = axios.post("api/iot/trigger_lock", {
+              device_id: "DOOR_001",
+              duration: 5000
+          });
+          console.log(response)
         }
         // PPE complete when less than 3 missing items
         else {
@@ -214,6 +220,13 @@ export default function PPEDetection() {
             };
 
             console.log("PPE complete - going to summary. Remaining employees:", remainingEmployees);
+
+            const response = axios.post("api/iot/trigger_unlock", {
+                device_id: "DOOR_001",
+                duration: 5000
+            });
+            console.log(response)
+
             navigate("/summary", {
               state: {
                 employeeData,

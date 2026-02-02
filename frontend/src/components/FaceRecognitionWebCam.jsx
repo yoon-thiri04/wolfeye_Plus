@@ -199,10 +199,11 @@ export default function LiveFaceVerify() {
     stopAllAudio();
 
     const utter = new SpeechSynthesisUtterance("Face recognition success");
+
     utter.pitch = 1;
     utter.rate = 1;
     speechUtteranceRef.current = utter;
-
+    utter.lang = 'en-MM';
     utter.onend = () => {
       setRedirectEmail(email);
       setCountdown(3);
