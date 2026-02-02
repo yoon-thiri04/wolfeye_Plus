@@ -3,11 +3,13 @@ import Webcam from "react-webcam";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { Camera, Wifi, Sun, CheckCircle2, Users, Bell } from "lucide-react";
+import faceverificiationsuccessSound from "../assets/sound_effect/face_recognition_success.mp3";
 
 export default function LiveFaceVerify() {
   const webcamRef = useRef(null);
   const containerRef = useRef(null);
   const alertAudioRef = useRef(null);
+  const audioRef = useRef(null);
 
   useEffect(() => {
     alertAudioRef.current = new Audio(`${import.meta.env.BASE_URL}alert.mp3`);
@@ -196,29 +198,26 @@ export default function LiveFaceVerify() {
   }, [countdown, redirectEmail, navigate]);
 
   const handleFaceSuccess = (email) => {
-    stopAllAudio();
+  stopAllAudio();
 
-    const utter = new SpeechSynthesisUtterance("Face recognition success");
+  audioRef.current = new Audio(faceverificiationsuccessSound);
+  audioRef.current.play();
 
-    utter.pitch = 1;
-    utter.rate = 1;
-    speechUtteranceRef.current = utter;
-    utter.lang = 'en-MM';
-    utter.onend = () => {
-      setRedirectEmail(email);
-      setCountdown(3);
-      const countdownInterval = setInterval(() => {
-        setCountdown((prev) => {
-          if (prev <= 1) {
-            clearInterval(countdownInterval);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    };
-    window.speechSynthesis.speak(utter);
+  audioRef.current.onended = () => {
+    setRedirectEmail(email);
+    setCountdown(3);
+
+    const countdownInterval = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(countdownInterval);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
   };
+};
 
   const playAlertSound = async () => {
     if (!alertAudioRef.current) return;
