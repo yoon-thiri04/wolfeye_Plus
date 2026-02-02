@@ -51,27 +51,15 @@ export default function PPEDetection() {
   const speakNext = () => {
   if (speechQueueRef.current.length === 0) {
     isSpeakingRef.current = false;
-       return;
+    return;
   }
 
   isSpeakingRef.current = true;
   const nextItem = speechQueueRef.current.shift();
-  
-  // Translation map for PPE items
-  const ppeTranslations = {
-    "helmet": "ဦးထုပ်",
-    "gloves": "လက်အိတ်",
-    "vest": "အင်္ကျီ",
-    "goggles": "မျက်မှန်",
-    "ear protection": "နားကြပ်",
-    "boots": "ဖိနပ်",
-    "person": "လူ"
-  };
-
-  const translatedItem = ppeTranslations[nextItem] || nextItem;
-  const msg = new SpeechSynthesisUtterance(`ကျေးဇူးပြု၍ သင့်${translatedItem}ကို သေချာပြပါ`);
-  msg.lang = 'my-MM';
-  msg.rate = 1;msg.onend = () => {
+  const msg = new SpeechSynthesisUtterance(`Please show your ${nextItem} clearly`);
+  msg.rate = 1;
+  msg.lang = 'en-US';
+  msg.onend = () => {
     setTimeout(() => {
       speakNext();
     }, 1500);
@@ -205,6 +193,12 @@ export default function PPEDetection() {
             }
           };
           window.speechSynthesis.speak(warningMsg);
+
+          const response = axios.post("api/iot/trigger_lock", {
+              device_id: "DOOR_001",
+              duration: 5000
+          });
+          console.log(response)
         }
         // PPE complete when less than 3 missing items
         else {
@@ -226,6 +220,13 @@ export default function PPEDetection() {
             };
 
             console.log("PPE complete - going to summary. Remaining employees:", remainingEmployees);
+
+            const response = axios.post("api/iot/trigger_unlock", {
+                device_id: "DOOR_001",
+                duration: 5000
+            });
+            console.log(response)
+
             navigate("/summary", {
               state: {
                 employeeData,
