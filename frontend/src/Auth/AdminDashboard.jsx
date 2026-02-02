@@ -274,14 +274,14 @@ const AdminDashboard = () => {
                   disabled={doorLoading}
                   className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-orange-500 to-amber-600 text-white text-sm font-semibold shadow-lg shadow-orange-500/20 hover:shadow-xl hover:shadow-orange-500/30 transition-all duration-300 disabled:opacity-60"
                 >
-                  {doorLoading ? "Sending..." : "Unlock Door"}
+                  {doorLoading ? "Sending..." : "Look Door"}
                 </button>
                 <button
                   onClick={handleDoorLock}
                   disabled={doorLoading}
                   className="px-5 py-2.5 rounded-xl bg-white text-gray-700 text-sm font-semibold border border-gray-200 shadow-sm hover:border-orange-200 hover:text-orange-600 transition-all duration-300 disabled:opacity-60"
                 >
-                  {doorLoading ? "Sending..." : "Lock Door"}
+                  {doorLoading ? "Sending..." : "Unlock Door"}
                 </button>
               </div>
             </div>
