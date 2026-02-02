@@ -43,12 +43,58 @@ export default function PPEDetection() {
     earprotection: new Audio(earprotection)
   });
 
-  // Initialize audio properties
+  // Function to stop all audio playback
+  const stopAllAudio = () => {
+    Object.values(audioRefs.current).forEach(audio => {
+      audio.pause();
+      audio.currentTime = 0;
+    });
+    // Also stop any speech synthesis
+    window.speechSynthesis.cancel();
+    isSpeakingRef.current = false;
+    speechQueueRef.current = [];
+  };
+
+  // Function to play priority audio (ppe-not-success or ppe-success)
+  const playPriorityAudio = (audioKey, onEndCallback) => {
+    // First stop all audio
+    stopAllAudio();
+
+    const audio = audioRefs.current[audioKey];
+    if (!audio) {
+      console.error(`Audio for key ${audioKey} not found`);
+      onEndCallback && onEndCallback();
+      return;
+    }
+
+    // Reset audio to start
+    audio.currentTime = 0;
+
+    // Set up onended handler
+    audio.onended = () => {
+      audio.onended = null; // Clean up
+      onEndCallback && onEndCallback();
+    };
+
+    // Play the audio
+    audio.play().catch(error => {
+      console.error('Error playing priority audio:', error);
+      // If audio fails, call the callback immediately
+      onEndCallback && onEndCallback();
+    });
+  };
+
+  // Initialize audio properties and set up cleanup
   useEffect(() => {
     Object.values(audioRefs.current).forEach(audio => {
       audio.preload = 'auto';
       audio.volume = 1.0;
     });
+
+    // Clean up function to stop all audio when component unmounts
+    return () => {
+      stopAllAudio();
+    };
   }, []);
 
   // Get company authentication token
@@ -96,34 +142,53 @@ export default function PPEDetection() {
     if (audioKey && audioRefs.current[audioKey]) {
       const audio = audioRefs.current[audioKey];
 
-      // Reset audio to start if already playing
-      audio.currentTime = 0;
+      // Check if we should continue playing
+      if (!isPriorityAudioPlaying()) {
+        // Reset audio to start if already playing
+        audio.currentTime = 0;
 
-      // Play the audio
-      audio.play().catch(error => {
-        console.error('Error playing audio:', error);
-        isSpeakingRef.current = false;
-        speakNext();
-      });
-
-      // When audio ends, wait and play next
-      audio.onended = () => {
-        setTimeout(() => {
+        // Play the audio
+        audio.play().catch(error => {
+          console.error('Error playing audio:', error);
+          isSpeakingRef.current = false;
           speakNext();
-        }, 1000);
-      };
+        });
+
+        // When audio ends, wait and play next
+        audio.onended = () => {
+          setTimeout(() => {
+            speakNext();
+          }, 1000);
+        };
+      } else {
+        // Priority audio is playing, skip this and clear queue
+        isSpeakingRef.current = false;
+        speechQueueRef.current = [];
+      }
     } else {
       // Fallback to text-to-speech if audio not found
-      const msg = new SpeechSynthesisUtterance(`Please show your ${nextItem} clearly`);
-      msg.rate = 1;
-      msg.lang = 'en-US';
-      msg.onend = () => {
-        setTimeout(() => {
-          speakNext();
-        }, 1500);
-      };
-      window.speechSynthesis.speak(msg);
+      // Check if priority audio is playing
+      if (!isPriorityAudioPlaying()) {
+        const msg = new SpeechSynthesisUtterance(`Please show your ${nextItem} clearly`);
+        msg.rate = 1;
+        msg.lang = 'en-US';
+        msg.onend = () => {
+          setTimeout(() => {
+            speakNext();
+          }, 1500);
+        };
+        window.speechSynthesis.speak(msg);
+      } else {
+        isSpeakingRef.current = false;
+        speechQueueRef.current = [];
+      }
     }
+  };
+
+  // Helper function to check if priority audio is playing
+  const isPriorityAudioPlaying = () => {
+    const priorityAudios = [audioRefs.current.ppeIncomplete, audioRefs.current.ppeComplete];
+    return priorityAudios.some(audio => !audio.paused && audio.currentTime > 0);
   };
 
   const startSession = async (personEmail) => {
@@ -232,33 +297,12 @@ export default function PPEDetection() {
 
         // PPE not complete when miss 3 or above 3 items
         if (missingCount >= 3) {
-          const audio = audioRefs.current.ppeIncomplete;
-
-          // Reset audio to start if already playing
-          audio.currentTime = 0;
-
-          audio.onended = () => {
-            console.log("PPE incomplete - navigating. Remaining employees:", remainingEmployees);
-            // If no employees remaining, go to homepage
-            if (remainingEmployees <= 0) {
-              console.log("No employees remaining, going to homepage");
-              navigate("/facewebcam");
-            }
-            else {
-              console.log("Employees remaining, going to facewebcam");
-              navigate("/facewebcam");
-            }
-          };
-
-          audio.play().catch(error => {
-            console.error('Error playing PPE incomplete audio:', error);
-            // Fallback to text-to-speech if audio fails
-            const warningMsg = new SpeechSynthesisUtterance(
-              "Your PPE detection is not complete. Please wear missing items properly and make redetection."
-            );
-            warningMsg.rate = 1;
-            warningMsg.onend = () => {
+          // Create a wrapper function for navigation that stops audio first
+          const navigateWithAudioStop = (path) => {
+            stopAllAudio();
+            setTimeout(() => {
               console.log("PPE incomplete - navigating. Remaining employees:", remainingEmployees);
+              // If no employees remaining, go to homepage
               if (remainingEmployees <= 0) {
                 console.log("No employees remaining, going to homepage");
                 navigate("/facewebcam");
@@ -267,8 +311,11 @@ export default function PPEDetection() {
                 console.log("Employees remaining, going to facewebcam");
                 navigate("/facewebcam");
               }
-            };
-            window.speechSynthesis.speak(warningMsg);
+            }, 100);
+          };
+
+          playPriorityAudio('ppeIncomplete', () => {
+            navigateWithAudioStop();
           });
 
           const response = axios.post("api/iot/trigger_unlock", {
@@ -279,47 +326,10 @@ export default function PPEDetection() {
         }
         // PPE complete when less than 3 missing items
         else {
-          const audio = audioRefs.current.ppeComplete;
-
-          // Reset audio to start if already playing
-          audio.currentTime = 0;
-
-          audio.onended = () => {
-            const ppeItems = data.ppe_status || {};
-            const totalItems = Object.keys(ppeItems).length;
-            const wornItems = Object.values(ppeItems).filter(Boolean).length;
-            const points = wornItems * (100 / totalItems);
-
-            const employeeData = {
-                name: data.person_info?.name || email,
-                status: "Attend",
-                checkIn: checkInTime,
-                earn: data.points || 0,
-                ppeItems: ppeItems,
-            };
-
-            console.log("PPE complete - going to summary. Remaining employees:", remainingEmployees);
-
-            const response = axios.post("api/iot/trigger_lock", {
-                device_id: "DOOR_001",
-                duration: 5000
-            });
-            console.log(response)
-
-            navigate("/summary", {
-              state: {
-                employeeData,
-                remainingEmployees
-              }
-            });
-          };
-
-          audio.play().catch(error => {
-            console.error('Error playing PPE complete audio:', error);
-            // Fallback to text-to-speech if audio fails
-            const completeMsg = new SpeechSynthesisUtterance("PPE detection complete");
-            completeMsg.rate = 1;
-            completeMsg.onend = () => {
+          // Create a wrapper function for navigation that stops audio first
+          const navigateWithAudioStop = () => {
+            stopAllAudio();
+            setTimeout(() => {
               const ppeItems = data.ppe_status || {};
               const totalItems = Object.keys(ppeItems).length;
               const wornItems = Object.values(ppeItems).filter(Boolean).length;
@@ -347,8 +357,11 @@ export default function PPEDetection() {
                   remainingEmployees
                 }
               });
-            };
-            window.speechSynthesis.speak(completeMsg);
+            }, 100);
+          };
+
+          playPriorityAudio('ppeComplete', () => {
+            navigateWithAudioStop();
           });
         }
       }
@@ -424,14 +437,20 @@ export default function PPEDetection() {
                 </div>
                 <div className="flex gap-2">
                   <button
-                    onClick={() => navigate('/facewebcam')}
+                    onClick={() => {
+                      stopAllAudio();
+                      navigate('/facewebcam');
+                    }}
                     className="px-4 py-1.5 bg-white text-gray-700 text-sm font-medium rounded-lg border border-gray-200 hover:bg-gray-50"
                   >
                     Go Back
                   </button>
                   {email && (
                     <button
-                      onClick={() => startSession(email)}
+                      onClick={() => {
+                        stopAllAudio();
+                        startSession(email);
+                      }}
                       className="px-4 py-1.5 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700"
                     >
                       Retry
@@ -493,7 +512,10 @@ export default function PPEDetection() {
                 </button>
 
                 <button
-                  onClick={() => setCameraActive(false)}
+                  onClick={() => {
+                    setCameraActive(false);
+                    stopAllAudio();
+                  }}
                   disabled={!cameraActive}
                   className="bg-white border border-gray-200 text-gray-700 px-6 py-2.5 rounded-xl hover:bg-gray-50 flex items-center justify-center gap-2 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto"
                 >
