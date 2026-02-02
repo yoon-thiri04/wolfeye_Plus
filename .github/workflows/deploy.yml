@@ -29,17 +29,13 @@ jobs:
               cd ~/wolfeye_Plus
             fi
 
-            # 2. Security & Malware Cleanup (Dynamic - User Scoped)
-            echo "Running security cleanup for current user..."
+            # 2. Security & Malware Cleanup (Safe Mode)
+            echo "Running security cleanup..."
             
-            # Kill processes owned by current user (github) ONLY if they match the suspicious path
-            # We use pgrep to find PIDs and then kill them, avoiding killing the current SSH session
-            pgrep -u $(whoami) -f "/var/tmp/" | xargs -r kill -9 || true
-            pgrep -u $(whoami) -f "/tmp/" | xargs -r kill -9 || true
-            
-            # Remove only files owned by the current user in tmp directories
-            find /var/tmp -user $(whoami) -delete || true
-            find /tmp -user $(whoami) -delete || true
+            # Remove suspicious files from tmp (safely)
+            # We do NOT kill processes here to avoid killing the SSH deployment script itself
+            rm -rf /var/tmp/[0-9]* || true  # Remove files that are just numbers (common malware pattern)
+            find /var/tmp -maxdepth 1 -type f -delete || true # Remove files in root of /var/tmp
             
             # 3. Pull latest changes efficiently
             git fetch origin staging
