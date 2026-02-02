@@ -32,9 +32,10 @@ jobs:
             # 2. Security & Malware Cleanup (Dynamic - User Scoped)
             echo "Running security cleanup for current user..."
             
-            # Kill processes owned by current user (github) running from tmp
-            pkill -u $(whoami) -f "/var/tmp/" || true
-            pkill -u $(whoami) -f "/tmp/" || true
+            # Kill processes owned by current user (github) ONLY if they match the suspicious path
+            # We use pgrep to find PIDs and then kill them, avoiding killing the current SSH session
+            pgrep -u $(whoami) -f "/var/tmp/" | xargs -r kill -9 || true
+            pgrep -u $(whoami) -f "/tmp/" | xargs -r kill -9 || true
             
             # Remove only files owned by the current user in tmp directories
             find /var/tmp -user $(whoami) -delete || true
