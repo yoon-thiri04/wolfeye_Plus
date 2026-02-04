@@ -4,32 +4,34 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { Camera, Wifi, Sun, CheckCircle2, Users, Bell } from "lucide-react";
 import faceverificiationsuccessSound from "../assets/sound_effect/face_recognition_success.mp3";
+import faceverificiationnotsuccessSound from "../assets/sound_effect/face-recognition-notsuccess.mp3";
 
 export default function LiveFaceVerify() {
   const webcamRef = useRef(null);
   const containerRef = useRef(null);
   const alertAudioRef = useRef(null);
   const audioRef = useRef(null);
+  const notSuccessAudioRef = useRef(null);
 
   useEffect(() => {
-    alertAudioRef.current = new Audio(`${import.meta.env.BASE_URL}face-recognition-notsuccess.mp3`);
-    alertAudioRef.current.preload = "auto";
+  alertAudioRef.current = new Audio(faceverificiationnotsuccessSound);
+  alertAudioRef.current.preload = "auto";
 
-    const preloadAudio = async () => {
-      try {
-        await alertAudioRef.current.load();
-        alertAudioRef.current.volume = 0;
-        await alertAudioRef.current.play().catch(() => {});
-        alertAudioRef.current.pause();
-        alertAudioRef.current.currentTime = 0;
-        alertAudioRef.current.volume = 1;
-      } catch (err) {
-        console.log("Audio preload completed");
-      }
-    };
+  const preloadAudio = async () => {
+    try {
+      await alertAudioRef.current.load();
+      alertAudioRef.current.volume = 0;
+      await alertAudioRef.current.play().catch(() => {});
+      alertAudioRef.current.pause();
+      alertAudioRef.current.currentTime = 0;
+      alertAudioRef.current.volume = 1;
+    } catch (err) {
+      console.log("Audio preload completed");
+    }
+  };
 
-    preloadAudio();
-  }, []);
+  preloadAudio();
+}, []);
 
   const [isActive, setIsActive] = useState(false);
   const [result, setResult] = useState(null);
@@ -49,19 +51,25 @@ export default function LiveFaceVerify() {
 
   // Cleanup function to stop all audio and speech
   const stopAllAudio = () => {
-    // Stop speech synthesis
-    if (window.speechSynthesis && window.speechSynthesis.speaking) {
-      window.speechSynthesis.cancel();
-    }
+  // Stop speech synthesis
+  if (window.speechSynthesis && window.speechSynthesis.speaking) {
+    window.speechSynthesis.cancel();
+  }
 
-    // Stop alert audio
-    if (alertAudioRef.current) {
-      alertAudioRef.current.pause();
-      alertAudioRef.current.currentTime = 0;
-    }
+  // Stop alert audio
+  if (alertAudioRef.current) {
+    alertAudioRef.current.pause();
+    alertAudioRef.current.currentTime = 0;
+  }
 
-    setCountdown(null);
-  };
+  // Stop not-success audio
+  if (notSuccessAudioRef.current) {
+    notSuccessAudioRef.current.pause();
+    notSuccessAudioRef.current.currentTime = 0;
+  }
+
+  setCountdown(null);
+};
 
   useEffect(() => {
     return () => {
@@ -219,6 +227,18 @@ export default function LiveFaceVerify() {
   };
 };
 
+// for face not-success
+const handleFaceNotSuccess = () => {
+  stopAllAudio();
+
+  notSuccessAudioRef.current = new Audio(faceverificiationnotsuccessSound);
+  notSuccessAudioRef.current.play();
+
+  // Show alert for unknown face
+  setShowAlert(true);
+  setTimeout(() => setShowAlert(false), 4000);
+};
+
   const playAlertSound = async () => {
     if (!alertAudioRef.current) return;
 
@@ -266,32 +286,29 @@ export default function LiveFaceVerify() {
       }
 
       if (res.data.status === "Identified") {
-        clearInterval(intervalRef.current);
-        handleFaceSuccess(res.data.email);
-      } else {
-        // Unknown face alert
-        setShowAlert(true);
-        playAlertSound();
-        setTimeout(() => setShowAlert(false), 4000);
-      }
+  clearInterval(intervalRef.current);
+  handleFaceSuccess(res.data.email);
+} else {
+  // Unknown face detected - play not-success sound
+  handleFaceNotSuccess();
+}
     } catch (err) {
-      console.error("Face verification error:", err);
+  console.error("Face verification error:", err);
 
-      if (err.response?.status === 401) {
-        setAuthError(true);
-        setResult({
-          status: "Authentication Required",
-          detail: "Company authentication required"
-        });
-        console.log("Setting auth error to true due to 401 response");
-      } else {
-        setResult({ status: "Error", detail: err.message });
-      }
+  if (err.response?.status === 401) {
+    setAuthError(true);
+    setResult({
+      status: "Authentication Required",
+      detail: "Company authentication required"
+    });
+    console.log("Setting auth error to true due to 401 response");
+  } else {
+    setResult({ status: "Error", detail: err.message });
+  }
 
-      setShowAlert(true);
-      playAlertSound();
-      setTimeout(() => setShowAlert(false), 4000);
-    }
+  // Play not-success sound for verification errors too
+  handleFaceNotSuccess();
+}
   };
 
   const startCamera = () => {
