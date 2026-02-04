@@ -77,7 +77,7 @@ const LandingSubscription = () => {
         <img
           src={mascot}
           alt="Wolf mascot"
-          className="w-100 h-100 object-contain mb-6"
+          className="w-full max-w-[400px] h-auto object-contain mb-6"
         />
 
         <h2 className="text-3xl md:text-4xl font-bold text-center mb-2">
@@ -91,7 +91,7 @@ const LandingSubscription = () => {
 
       {/* Billing Toggle */}
       <motion.div
-        className="w-full flex flex-row items-center text-left gap-4 mb-12 justify-start pl-6 md:pl-190"
+        className="w-full flex flex-col md:flex-row items-center justify-center gap-4 mb-12"
         initial={{ opacity: 0, y: 30 }}
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}

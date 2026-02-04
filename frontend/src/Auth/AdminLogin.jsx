@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { Eye, EyeOff, LogIn, Building, Users, Shield } from "lucide-react";
+import { useNavigate, Link } from "react-router-dom";
+import { Eye, EyeOff, LogIn, Building, Users, Shield, ArrowRight, Briefcase } from "lucide-react";
 import axios from "axios";
+import gradientBg from "../assets/images/home-gradient-effect.png";
+import logo from "../assets/images/Logo-Elitebuilders.png";
 
 const AdminLogin = () => {
   const [formData, setFormData] = useState({
@@ -55,9 +57,10 @@ const AdminLogin = () => {
     try {
       console.log("Attempting login with:", formData.email);
 
-      const response = await axios.post("http://localhost:8000/login", {
+      const response = await axios.post("/api/login", {
         email: formData.email,
-        password: formData.password
+        password: formData.password,
+        role: "admin"
       });
 
       console.log("Login response:", response.data);
@@ -77,7 +80,7 @@ const AdminLogin = () => {
             id: decodedToken.id,
             name: decodedToken.name,
             email: decodedToken.email,
-            role: decodedToken.role
+            role: "admin" // Force role to be admin for consistency
           }));
 
           // Check if user is admin
@@ -119,23 +122,43 @@ const AdminLogin = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-      <div className="max-w-4xl w-full grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Left Side - Login Form */}
-        <div className="bg-white rounded-2xl shadow-xl p-8 lg:p-12">
-          <div className="text-center mb-8">
-            <div className="w-16 h-16 bg-indigo-600 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Shield className="w-8 h-8 text-white" />
-            </div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Admin Portal</h1>
-            <p className="text-gray-600">Sign in to manage companies and system settings</p>
-          </div>
+    <div className="relative min-h-screen flex items-center justify-center p-4 overflow-hidden">
+      {/* Background Gradient */}
+      <img
+        src={gradientBg}
+        alt="Background"
+        className="absolute inset-0 w-full h-full object-cover z-0"
+      />
+      
+      <div className="relative z-10 w-full max-w-md bg-white/70 backdrop-blur-2xl rounded-[2.5rem] shadow-[0_8px_32px_0_rgba(31,38,135,0.07)] p-8 md:p-10 border border-white/50">
+        <div className="text-center mb-8">
+          <Link to="/" className="inline-block mb-6">
+             <img src={logo} alt="WolfEye+" className="h-8 md:h-10 mx-auto" />
+          </Link>
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2" style={{ fontFamily: "Plus Jakarta Sans" }}>
+            Admin Portal
+          </h1>
+          <p className="text-gray-500 text-sm md:text-base">Sign in to manage companies and system settings</p>
+        </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                Email Address
-              </label>
+        {error && (
+          <div className="mb-6 p-4 bg-red-50/80 border border-red-100 rounded-xl flex items-start gap-3">
+             <div className="bg-red-100 p-1 rounded-full text-red-600 shrink-0 mt-0.5">
+               <Shield size={14} />
+             </div>
+             <p className="text-red-600 text-sm">{error}</p>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider ml-1">
+              Email Address
+            </label>
+            <div className="relative group">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <Shield className="h-5 w-5 text-gray-400 group-focus-within:text-orange-500 transition-colors" />
+              </div>
               <input
                 id="email"
                 name="email"
@@ -143,107 +166,78 @@ const AdminLogin = () => {
                 required
                 value={formData.email}
                 onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-colors"
+                className="block w-full pl-11 pr-4 py-3.5 bg-white/50 border border-gray-200 rounded-2xl text-gray-900 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all shadow-sm hover:bg-white/80 text-base"
                 placeholder="admin@example.com"
               />
             </div>
+          </div>
 
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-                Password
-              </label>
-              <div className="relative">
-                <input
-                  id="password"
-                  name="password"
-                  type={showPassword ? "text" : "password"}
-                  required
-                  value={formData.password}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-colors pr-12"
-                  placeholder="Enter your password"
-                />
-                <button
-                  type="button"
-                  onClick={togglePasswordVisibility}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                </button>
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider ml-1">
+              Password
+            </label>
+            <div className="relative group">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <Shield className="h-5 w-5 text-gray-400 group-focus-within:text-orange-500 transition-colors" />
               </div>
+              <input
+                id="password"
+                name="password"
+                type={showPassword ? "text" : "password"}
+                required
+                value={formData.password}
+                onChange={handleChange}
+                className="block w-full pl-11 pr-12 py-3.5 bg-white/50 border border-gray-200 rounded-2xl text-gray-900 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all shadow-sm hover:bg-white/80 text-base"
+                placeholder="••••••••"
+              />
+              <button
+                type="button"
+                onClick={togglePasswordVisibility}
+                className="absolute inset-y-0 right-0 pr-4 flex items-center"
+              >
+                {showPassword ? (
+                  <EyeOff className="h-5 w-5 text-gray-400 hover:text-gray-600 transition-colors" />
+                ) : (
+                  <Eye className="h-5 w-5 text-gray-400 hover:text-gray-600 transition-colors" />
+                )}
+              </button>
             </div>
+          </div>
 
-            {error && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                <p className="text-red-800 text-sm font-medium">{error}</p>
-              </div>
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full flex justify-center items-center py-4 px-4 border border-transparent rounded-2xl shadow-lg text-sm font-bold text-white bg-gray-900 hover:bg-black focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-all transform hover:-translate-y-0.5"
+          >
+            {loading ? (
+              <span className="flex items-center gap-2">
+                <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Signing in...
+              </span>
+            ) : (
+              <span className="flex items-center gap-2">
+                Sign In to Dashboard <ArrowRight size={18} />
+              </span>
             )}
+          </button>
+        </form>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className={`w-full py-3 px-4 rounded-lg font-semibold text-white flex items-center justify-center gap-2 transition-colors ${
-                loading
-                  ? "bg-indigo-400 cursor-not-allowed"
-                  : "bg-indigo-600 hover:bg-indigo-700"
-              }`}
-            >
-              {loading ? (
-                <>
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  Signing in...
-                </>
-              ) : (
-                <>
-                  <LogIn className="w-5 h-5" />
-                  Sign In
-                </>
-              )}
-            </button>
-          </form>
-
-          <div className="mt-8 pt-6 border-t border-gray-200">
-            <div className="bg-blue-50 rounded-lg p-4">
-              <h3 className="text-sm font-semibold text-blue-900 mb-2">Admin Access</h3>
-              <p className="text-xs text-blue-700">
-                Only users with admin role can access the dashboard
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Right Side - Info */}
-        <div className="flex flex-col justify-center">
-          <div className="text-center lg:text-left">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              Admin Dashboard
-            </h2>
-            <p className="text-lg text-gray-600 mb-8">
-              Manage companies, employees, and system configurations with full administrative privileges.
-            </p>
-          </div>
-
-          <div className="bg-indigo-50 rounded-xl p-6 border border-indigo-100">
-            <h3 className="font-semibold text-indigo-900 mb-3">Administrative Features</h3>
-            <ul className="space-y-2 text-sm text-indigo-800">
-              <li className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-indigo-400 rounded-full"></div>
-                Company Management & Analytics
-              </li>
-              <li className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-indigo-400 rounded-full"></div>
-                Employee Enrollment & Oversight
-              </li>
-              <li className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-indigo-400 rounded-full"></div>
-                System Configuration & Security
-              </li>
-              <li className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-indigo-400 rounded-full"></div>
-                Access Control & Permissions
-              </li>
-            </ul>
-          </div>
+        <div className="mt-10 pt-6 border-t border-gray-200/50">
+           <div className="flex flex-col gap-3 text-center">
+             <p className="text-sm text-gray-500">Other login options:</p>
+             <div className="flex justify-center gap-4 text-sm font-medium">
+               <Link to="/employee/login" className="text-gray-600 hover:text-orange-600 transition-colors flex items-center gap-1.5">
+                 <Users size={16} /> Employee
+               </Link>
+               <span className="text-gray-300">|</span>
+               <Link to="/company/login" className="text-gray-600 hover:text-orange-600 transition-colors flex items-center gap-1.5">
+                 <Briefcase size={16} /> Company
+               </Link>
+             </div>
+           </div>
         </div>
       </div>
     </div>

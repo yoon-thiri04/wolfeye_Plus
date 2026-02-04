@@ -39,7 +39,7 @@ const LandingBanner = () => {
               key={i}
               src={p.logo}
               alt={p.name}
-              className="h-25 w-auto grayscale hover:grayscale-0 transition"
+              className="h-12 md:h-16 lg:h-20 w-auto grayscale hover:grayscale-0 transition"
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: i * 0.1 }}

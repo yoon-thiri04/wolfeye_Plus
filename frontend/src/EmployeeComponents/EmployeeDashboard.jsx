@@ -1,7 +1,15 @@
 import React, { useState, useEffect } from "react";
-import { Building, Calendar, MapPin, Gift, BarChart3, Check, X, AlertTriangle, Eye, LucideBookCheck, HardHat, Shield, Glasses, Ear } from "lucide-react";
+import { 
+  Building, Calendar, MapPin, Gift, BarChart3, Check, X, 
+  AlertTriangle, Eye, LucideBookCheck, HardHat, Shield, 
+  Glasses, Ear, TrendingUp, Activity, Award, ChevronRight 
+} from "lucide-react";
 import EmployeeNavbar from "./EmployeeNavbar.jsx";
 import axios from "axios";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
+} from 'recharts';
 
 const EmployeeDashboard = () => {
   const [activeDetectionTab, setActiveDetectionTab] = useState("daily");
@@ -18,16 +26,25 @@ const EmployeeDashboard = () => {
       setLoading(true);
       const token = localStorage.getItem("employee_token");
 
-      const response = await axios.get("http://localhost:8000/employee/dashboard", {
+      if (!token) {
+        window.location.href = "/employee/login";
+        return;
+      }
+
+      const response = await axios.get("/api/employee/dashboard", {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
-
+      console.log(response)
       setDashboardData(response.data);
     } catch (err) {
       console.error("Failed to fetch dashboard data:", err);
-      setError("Failed to load dashboard data");
+      if (err.response && err.response.status === 401) {
+        window.location.href = "/employee/login";
+      } else {
+        setError("Failed to load dashboard data");
+      }
     } finally {
       setLoading(false);
     }
@@ -35,536 +52,458 @@ const EmployeeDashboard = () => {
 
   if (loading) {
     return (
-      <>
-        <EmployeeNavbar />
-        <div className="min-h-screen bg-white flex items-center justify-center">
-          <div className="text-center">
-            <div className="w-16 h-16 border-4 border-green-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading your dashboard...</p>
+      <div className="min-h-screen bg-orange-50/50 flex flex-col">
+        <EmployeeNavbar activePage="Dashboard" />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="flex flex-col items-center gap-4">
+            <div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-gray-500 font-medium">Loading your dashboard...</p>
           </div>
         </div>
-      </>
+      </div>
     );
   }
 
   if (error) {
     return (
-      <>
-        <EmployeeNavbar />
-        <div className="min-h-screen bg-white flex items-center justify-center">
-          <div className="text-center">
-            <p className="text-red-600 mb-4">{error}</p>
+      <div className="min-h-screen bg-orange-50/50 flex flex-col">
+        <EmployeeNavbar activePage="Dashboard" />
+        <div className="flex-1 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center">
+            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <AlertTriangle className="w-8 h-8 text-red-600" />
+            </div>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">Something went wrong</h3>
+            <p className="text-gray-500 mb-6">{error}</p>
             <button
               onClick={fetchDashboardData}
-              className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
+              className="w-full bg-orange-600 text-white py-3 rounded-xl font-semibold hover:bg-orange-700 transition-colors"
             >
-              Retry
+              Try Again
             </button>
           </div>
         </div>
-      </>
+      </div>
     );
   }
 
-  if (!dashboardData) {
-    return (
-      <>
-        <EmployeeNavbar />
-        <div className="min-h-screen bg-white flex items-center justify-center">
-          <div className="text-center">
-            <p className="text-gray-600">No data available</p>
-          </div>
-        </div>
-      </>
-    );
-  }
+  if (!dashboardData) return null;
 
   const { employee, company, attendance, ppe } = dashboardData;
-
-  // Get current month and year for calendar
   const currentDate = new Date();
-  const currentMonth = currentDate.toLocaleString('default', { month: 'long' });
-  const currentYear = currentDate.getFullYear();
+  
+  // Calculate stats for cards
+  const attendanceRate = parseFloat(attendance.monthly_average) || 0;
+  
+  const currentWeekData = ppe.weekly_summary?.[getWeekNumber(currentDate)];
+  let safetyScore = 0;
 
-  // Calculate calendar days
-  const getCalendarDays = () => {
-  const daysInMonth = new Date(currentYear, currentDate.getMonth() + 1, 0).getDate();
-  const firstDay = new Date(currentYear, currentDate.getMonth(), 1).getDay();
-
-  const days = [];
-
-  // Add empty days for the first week
-  for (let i = 0; i < firstDay; i++) {
-    days.push(null);
+  if (currentWeekData?.safety_score !== undefined) {
+    safetyScore = currentWeekData.safety_score;
+  } else if (currentWeekData) {
+    // Fallback: Calculate from violations assuming 5 PPE items per day
+    const totalChecks = (currentWeekData.days_count || 0) * 5;
+    const violations = currentWeekData.violations || 0;
+    if (totalChecks > 0) {
+      safetyScore = Math.max(0, ((totalChecks - violations) / totalChecks) * 100);
+    }
   }
 
-  // Add actual days
-  for (let i = 1; i <= daysInMonth; i++) {
-    const dateStr = `${currentYear}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
-    const attendanceRecord = attendance.calender.find(a => a.date === dateStr);
-    const dayDate = new Date(currentYear, currentDate.getMonth(), i);
-    const isFuture = dayDate > currentDate;
-    const hasData = !!attendanceRecord;
 
-    days.push({
-      day: i,
-      present: attendanceRecord ? attendanceRecord.present : false,
-      isToday: i === currentDate.getDate() && currentDate.getMonth() === currentDate.getMonth(),
-      isFuture: isFuture,
-      hasData: hasData
-    });
-  }
-
-  return days;
-};
-
-  const calendarDays = getCalendarDays();
-
-  const getWeekNumber = (date) => {
-    const firstDayOfYear = new Date(date.getFullYear(), 0, 1);
-    const pastDaysOfYear = (date - firstDayOfYear) / 86400000;
-    return Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
-  };
-
-  const currentWeek = getWeekNumber(currentDate);
-  const weeklyData = ppe.weekly_summary[currentWeek] || {};
+  // Chart Data Preparation
+  const weeklyData = ppe.weekly_summary[getWeekNumber(currentDate)] || {};
+  const violationsData = weeklyData.bar_chart_data 
+    ? Object.entries(weeklyData.bar_chart_data).map(([name, value]) => ({
+        name: name.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
+        value: value
+      }))
+    : [];
 
   return (
-    <>
-      <EmployeeNavbar />
-      <div className="min-h-screen bg-white flex flex-col items-center py-6 px-4">
-        <div className="w-full max-w-md space-y-6">
-          {/* Safety Performance Overview Card */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-            <h2 className="text-xl font-semibold text-gray-800 mb-2">
-              Your Safety Performance <span className="text-yellow-600">Overview</span>
-            </h2>
-            <p className="text-gray-600 text-sm leading-relaxed mb-6 text-left">
-              Your daily and weekly safety points are calculated from real-time PPE detections using webcam checks.
-              Keep your gear complete to boost your score and earn rewards.
+    <div className="min-h-screen bg-[#FDF8F6]">
+      <EmployeeNavbar activePage="Dashboard" />
+      
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+        {/* Header Section */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+              Welcome back, <span className="text-orange-600">{employee.name}</span>
+            </h1>
+            <p className="text-gray-500 mt-1 flex items-center gap-2">
+              <Building className="w-4 h-4" />
+              {company.name} • {company.plan} Plan
             </p>
-
-            <div className="space-y-4 text-sm">
-              <div className="flex items-center justify-between bg-yellow-50 rounded-xl p-3">
-                <span className="flex items-center gap-2 text-gray-700 font-medium">
-                  <Building className="w-4 h-4 text-yellow-600" />
-                  Assigned Company:
-                </span>
-                <span className="font-semibold text-gray-900">
-                  {company.name}
-                </span>
-              </div>
-
-              <div className="flex items-center justify-between bg-blue-50 rounded-xl p-3">
-                <span className="flex items-center gap-2 text-gray-700 font-medium">
-                  <Calendar className="w-4 h-4 text-blue-600" />
-                  Plan:
-                </span>
-                <span className="font-semibold text-gray-900">
-                  {company.plan}
-                </span>
-              </div>
-
-              <div className="flex items-center justify-between bg-green-50 rounded-xl p-3">
-                <span className="flex items-center gap-2 text-gray-700 font-medium">
-                  <MapPin className="w-4 h-4 text-green-600" />
-                  Employee:
-                </span>
-                <span className="font-semibold text-gray-900">
-                  {employee.name}
-                </span>
-              </div>
-            </div>
           </div>
+          <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-xl shadow-sm border border-gray-100">
+            <Calendar className="w-5 h-5 text-orange-500" />
+            <span className="text-gray-600 font-medium">
+              {currentDate.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+            </span>
+          </div>
+        </div>
 
-          {/* Rewards Card */}
-          <div className="rounded-2xl bg-gradient-to-b from-amber-400 to-orange-400 text-white shadow-md p-6">
-            <h2 className="text-lg font-semibold mb-2">Your Rewards</h2>
-            <p className="text-sm text-white/90 mb-6">
-              Track your safety points and progress
-            </p>
-
-            <div className="relative mb-10 mt-10">
-              <div className="relative bg-yellow-500 rounded-full p-8 shadow-xl border-8 border-yellow-400/50">
-                <div className="absolute inset-4 bg-yellow-300/20 rounded-full"></div>
-
-                <div className="text-center relative z-10">
-                  <div className="text-5xl font-extrabold text-white mb-1">{employee.total_point}</div>
-                  <div className="text-white/90 text-sm font-medium">Total Safety Points</div>
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Total Points Card */}
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-gradient-to-br from-orange-500 to-amber-600 rounded-[2rem] p-6 text-white relative overflow-hidden shadow-lg shadow-orange-500/20"
+          >
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-10 -mt-10 blur-2xl"></div>
+            <div className="relative z-10">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
+                  <Gift className="w-6 h-6 text-white" />
                 </div>
+                <span className="font-medium text-white/90">Total Safety Points</span>
               </div>
-            </div>
-
-            <div className="mb-6 border border-white/40 p-3 rounded-lg">
-              <div className="flex justify-between text-sm text-white/90 mb-1">
-                <span>Next Level</span>
-                <span>{employee.total_point} / 10000 pts</span>
+              <div className="flex items-end gap-2 mb-4">
+                <span className="text-4xl font-bold">{employee.total_point}</span>
+                <span className="text-sm text-white/80 mb-1.5">pts</span>
               </div>
-              <div className="w-full bg-white/30 rounded-full h-2">
-                <div
-                  className="bg-white h-2 rounded-full"
+              <div className="w-full bg-black/20 rounded-full h-1.5 mb-2">
+                <div 
+                  className="bg-white rounded-full h-1.5 transition-all duration-1000"
                   style={{ width: `${Math.min((employee.total_point / 10000) * 100, 100)}%` }}
                 ></div>
               </div>
-            </div>
-
-            <button className="w-full flex items-center justify-center gap-2 bg-white text-orange-600 font-semibold py-3 rounded-xl shadow hover:bg-gray-100 transition">
-              <Gift className="w-5 h-5" />
-              Redeem Rewards
-            </button>
-          </div>
-
-
-          {/* Calendar */}
-<div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-  <div className="flex justify-between items-center mb-4">
-    <button className="text-gray-400 text-sm">&lt;</button>
-    <h3 className="text-lg font-semibold text-gray-800">{currentMonth} {currentYear}</h3>
-    <button className="text-gray-400 text-sm">&gt;</button>
-  </div>
-
-  {/* Separator */}
-  <div className="flex items-center my-6">
-    <hr className="flex-grow border-gray-300" />
-    <hr className="flex-grow border-gray-300" />
-  </div>
-
-  <div className="grid grid-cols-7 text-center text-sm text-gray-600 mb-2">
-    {["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"].map((d) => (
-      <div key={d}>{d}</div>
-    ))}
-  </div>
-
-  <div className="grid grid-cols-7 text-center gap-y-2 text-sm">
-    {calendarDays.map((day, i) => {
-      if (!day) {
-        return <div key={i} className="text-gray-300"></div>;
-      }
-
-      const dayDate = new Date(currentYear, currentDate.getMonth(), day.day);
-      const isFutureDay = dayDate > currentDate;
-      const isToday = day.day === currentDate.getDate() && currentDate.getMonth() === currentDate.getMonth();
-      const hasAttendanceData = day.hasData;
-
-      let bgColor = '';
-      let textColor = 'text-gray-900';
-
-      if (isFutureDay) {
-        bgColor = '';
-        textColor = 'text-gray-400';
-      } else if (!hasAttendanceData) {
-        bgColor = '';
-        textColor = 'text-gray-600';
-      } else if (day.present) {
-        bgColor = 'bg-green-700';
-        textColor = 'text-white';
-      } else {
-        bgColor = 'bg-red-600';
-        textColor = 'text-white';
-      }
-
-      return (
-        <div
-          key={i}
-          className={`${bgColor} ${textColor} ${(hasAttendanceData && !isFutureDay) ? 'font-semibold rounded-full w-8 h-8 flex items-center justify-center mx-auto' : ''} ${isToday ? '' : ''}`}
-        >
-          {day.day}
-        </div>
-      );
-    })}
-  </div>
-
-  {/* Separator */}
-  <div className="flex items-center my-6">
-    <hr className="flex-grow border-gray-300" />
-    <hr className="flex-grow border-gray-300" />
-  </div>
-
-            <div className="flex justify-center gap-6 text-xs text-gray-600 mt-9">
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-3 bg-green-500 rounded-full"></span> Present
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-3 bg-red-500 rounded-full"></span> Absent
+              <div className="flex justify-between text-xs text-white/80">
+                <span>Progress to Level 2</span>
+                <span>10,000 pts</span>
               </div>
             </div>
-          </div>
+          </motion.div>
 
-          {/* Attendance Stats Cards */}
-          <div className="rounded-2xl bg-gradient-to-br from-blue-400 to-blue-900 text-white shadow-md p-6 text-left">
-            <div className="flex items-center gap-3 mb-3">
-              <div><BarChart3 className="w-5 h-5 text-white/80" /></div>
-              <h4 className="font-semibold">Attendance Rate</h4>
+          {/* Attendance Rate Card */}
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="bg-white rounded-[2rem] p-6 shadow-sm border border-gray-100"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-50 rounded-lg">
+                  <Activity className="w-6 h-6 text-blue-600" />
+                </div>
+                <span className="font-medium text-gray-600">Attendance Rate</span>
+              </div>
+              <span className={`px-2 py-1 rounded-lg text-xs font-bold ${
+                attendanceRate >= 90 ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
+              }`}>
+                {attendanceRate >= 90 ? 'Excellent' : 'Average'}
+              </span>
             </div>
-            <div className="text-4xl font-extrabold mb-1">{attendance.monthly_average}%</div>
-            {/* Separator */}
-            <div className="flex items-center my-6">
-              <hr className="flex-grow border-gray-200" />
-              <hr className="flex-grow border-gray-300" />
+            <div className="flex items-end gap-2 mb-2">
+              <span className="text-4xl font-bold text-gray-900">{attendanceRate}%</span>
             </div>
-            <p className="text-white/90 text-sm">Monthly average performance</p>
-          </div>
-
-          <div className="rounded-2xl bg-gradient-to-br from-green-400 to-green-900 text-white shadow-md p-6 text-left">
-            <div className="flex items-center gap-3 mb-3">
-              <Check className="w-5 h-5 text-white/80" />
-              <h4 className="font-semibold">Present Days</h4>
+            <div className="flex gap-4 text-sm text-gray-500">
+              <span className="flex items-center gap-1">
+                <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                {attendance.present_count} Present
+              </span>
+              <span className="flex items-center gap-1">
+                <div className="w-2 h-2 rounded-full bg-red-500"></div>
+                {attendance.absent_count} Absent
+              </span>
             </div>
-            <div className="text-4xl font-extrabold mb-1">{attendance.present_count}</div>
-            {/* Separator */}
-            <div className="flex items-center my-6">
-              <hr className="flex-grow border-gray-200" />
-              <hr className="flex-grow border-gray-300" />
+          </motion.div>
+
+          {/* Safety Score Card */}
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="bg-white rounded-[2rem] p-6 shadow-sm border border-gray-100"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-green-50 rounded-lg">
+                  <Shield className="w-6 h-6 text-green-600" />
+                </div>
+                <span className="font-medium text-gray-600">Safety Score</span>
+              </div>
             </div>
-
-            <p className="text-white/90 text-sm">Days successfully attended</p>
-          </div>
-
-          <div className="rounded-2xl bg-gradient-to-br from-red-400 to-red-900 text-white shadow-md p-6 text-left">
-            <div className="flex items-center gap-3 mb-3">
-              <X className="w-5 h-5 text-white/80" />
-              <h4 className="font-semibold">Absent Days</h4>
+            <div className="flex items-end gap-2 mb-2">
+              <span className="text-4xl font-bold text-gray-900">{safetyScore}</span>
+              <span className="text-sm text-gray-500 mb-1">/ 100</span>
             </div>
-            <div className="text-4xl font-extrabold mb-1">{attendance.absent_count}</div>
-
-            {/* Separator */}
-            <div className="flex items-center my-6">
-              <hr className="flex-grow border-gray-200" />
-              <hr className="flex-grow border-gray-300" />
-            </div>
-
-            <p className="text-white/90 text-sm">Days missed this month</p>
-          </div>
-
-          {/* Safety Equipment Detection Section */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mt-6 text-left">
-            <h2 className="text-lg font-semibold text-gray-900 mb-2">Safety Equipment Detection</h2>
-            <p className="text-sm text-gray-500 mb-4">
-              Track your PPE compliance and earn points for wearing proper safety gear
+            <p className="text-sm text-gray-500">
+              Based on PPE compliance this week. Keep it up!
             </p>
+          </motion.div>
+        </div>
 
-            {/* Toggle Buttons */}
-            <div className="flex bg-gray-100 rounded-full p-1 mb-6">
-              <button
-                onClick={() => setActiveDetectionTab("daily")}
-                className={`flex-1 text-sm px-4 py-1.5 rounded-full transition-colors ${
-                  activeDetectionTab === "daily" 
-                    ? 'bg-white text-gray-900 font-medium shadow-sm' 
-                    : 'text-gray-600'
-                }`}
-              >
-                Daily Detection
-              </button>
-              <button
-                onClick={() => setActiveDetectionTab("weekly")}
-                className={`flex-1 text-sm px-4 py-1.5 rounded-full transition-colors ${
-                  activeDetectionTab === "weekly" 
-                    ? 'bg-white text-gray-900 font-medium shadow-sm' 
-                    : 'text-gray-600'
-                }`}
-              >
-                Weekly Summary
-              </button>
+        {/* Main Content Area */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Left Column: Attendance Calendar */}
+          <div className="lg:col-span-2 space-y-8">
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="bg-white rounded-[2rem] p-6 shadow-sm border border-gray-100"
+            >
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-lg font-bold text-gray-900">Attendance Calendar</h2>
+                <div className="flex items-center gap-2 text-sm text-gray-500">
+                  <span className="flex items-center gap-1"><div className="w-2 h-2 bg-green-500 rounded-full"></div> Present</span>
+                  <span className="flex items-center gap-1"><div className="w-2 h-2 bg-red-500 rounded-full"></div> Absent</span>
+                </div>
+              </div>
+              
+              <CalendarView attendance={attendance} currentYear={currentDate.getFullYear()} currentMonth={currentDate.getMonth()} />
+            </motion.div>
+
+            {/* PPE Detection Section */}
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              className="bg-white rounded-[2rem] p-6 shadow-sm border border-gray-100"
+            >
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                <div>
+                  <h2 className="text-lg font-bold text-gray-900">PPE Compliance Analysis</h2>
+                  <p className="text-sm text-gray-500">Track your safety equipment usage</p>
+                </div>
+                <div className="flex bg-gray-100 rounded-xl p-1">
+                  <button
+                    onClick={() => setActiveDetectionTab("daily")}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                      activeDetectionTab === "daily" ? "bg-white text-orange-600 shadow-sm" : "text-gray-500 hover:text-gray-700"
+                    }`}
+                  >
+                    Weekly Summary
+                  </button>
+                  <button
+                    onClick={() => setActiveDetectionTab("weekly")}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                      activeDetectionTab === "weekly" ? "bg-white text-orange-600 shadow-sm" : "text-gray-500 hover:text-gray-700"
+                    }`}
+                  >
+                    Today's Status
+                  </button>
+                </div>
+              </div>
+
+              <AnimatePresence mode="wait">
+                {activeDetectionTab === "daily" ? (
+                  <motion.div
+                    key="weekly-summary"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 20 }}
+                    className="space-y-6"
+                  >
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="bg-red-50 rounded-xl p-4 border border-red-100">
+                        <div className="flex items-center gap-3 mb-2">
+                          <AlertTriangle className="w-5 h-5 text-red-500" />
+                          <span className="font-medium text-red-700">Total Violations</span>
+                        </div>
+                        <p className="text-2xl font-bold text-red-800">{weeklyData.violations || 0}</p>
+                      </div>
+                      <div className="bg-orange-50 rounded-xl p-4 border border-orange-100">
+                        <div className="flex items-center gap-3 mb-2">
+                          <Eye className="w-5 h-5 text-orange-500" />
+                          <span className="font-medium text-orange-700">Most Missed Item</span>
+                        </div>
+                        <p className="text-lg font-bold text-orange-800 truncate">
+                          {weeklyData.most_missed_item ? weeklyData.most_missed_item.replace(/_/g, ' ').toUpperCase() : 'None'}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="h-64 w-full">
+                      {violationsData.length > 0 ? (
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={violationsData} layout="vertical" margin={{ left: 20 }}>
+                            <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#E5E7EB" />
+                            <XAxis type="number" hide />
+                            <YAxis dataKey="name" type="category" width={100} tick={{ fontSize: 12 }} />
+                            <Tooltip 
+                              cursor={{ fill: '#F3F4F6' }}
+                              contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                            />
+                            <Bar dataKey="value" fill="#F97316" radius={[0, 4, 4, 0]} barSize={20} />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      ) : (
+                        <div className="h-full flex items-center justify-center text-gray-400">
+                          No violations recorded this week
+                        </div>
+                      )}
+                    </div>
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="today-status"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 20 }}
+                    className="space-y-6"
+                  >
+                    <div className="flex items-center justify-between bg-blue-50 p-4 rounded-xl border border-blue-100">
+                      <div className="flex items-center gap-3">
+                        <Check className="w-5 h-5 text-blue-600" />
+                        <span className="font-medium text-blue-800">Today's Score</span>
+                      </div>
+                      <span className="text-2xl font-bold text-blue-800">{ppe.today_point || 0} pts</span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {ppe.today_status && Object.entries(ppe.today_status).map(([key, value]) => (
+                        <div key={key} className={`p-4 rounded-xl border flex items-center justify-between ${
+                          value ? 'bg-green-50 border-green-100' : 'bg-red-50 border-red-100'
+                        }`}>
+                          <span className="text-sm font-medium text-gray-700 capitalize">
+                            {key.replace(/_/g, ' ')}
+                          </span>
+                          {value ? (
+                            <Check className="w-5 h-5 text-green-600" />
+                          ) : (
+                            <X className="w-5 h-5 text-red-600" />
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+          </div>
+
+          {/* Right Column: Rewards & Actions */}
+          <div className="space-y-8">
+             <motion.div 
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.5 }}
+              className="bg-white rounded-[2rem] p-6 shadow-sm border border-gray-100 h-fit"
+            >
+              <h3 className="text-lg font-bold text-gray-900 mb-4">Quick Actions</h3>
+              <div className="space-y-3">
+                <button className="w-full flex items-center justify-between p-4 rounded-xl bg-gray-50 hover:bg-orange-50 hover:text-orange-600 transition-all group">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-white p-2 rounded-lg shadow-sm group-hover:shadow-md transition-shadow">
+                      <Award className="w-5 h-5 text-gray-600 group-hover:text-orange-600" />
+                    </div>
+                    <span className="font-medium">Redeem Rewards</span>
+                  </div>
+                  <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-orange-600" />
+                </button>
+                
+                <button className="w-full flex items-center justify-between p-4 rounded-xl bg-gray-50 hover:bg-orange-50 hover:text-orange-600 transition-all group">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-white p-2 rounded-lg shadow-sm group-hover:shadow-md transition-shadow">
+                      <HardHat className="w-5 h-5 text-gray-600 group-hover:text-orange-600" />
+                    </div>
+                    <span className="font-medium">Report Issue</span>
+                  </div>
+                  <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-orange-600" />
+                </button>
+              </div>
+            </motion.div>
+
+            {/* Tips Card */}
+            <motion.div 
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.6 }}
+              className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-[2rem] p-6 text-white"
+            >
+              <h3 className="text-lg font-bold mb-2">Safety Tip</h3>
+              <p className="text-white/90 text-sm leading-relaxed mb-4">
+                Always ensure your helmet fits snugly. A loose helmet provides significantly less protection in case of impact.
+              </p>
+              <div className="flex items-center gap-2 text-xs text-white/70">
+                <Shield className="w-4 h-4" />
+                <span>Daily Recommendation</span>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+};
+
+// Helper Functions
+const getWeekNumber = (date) => {
+  const target = new Date(date.valueOf());
+  console.log('target', target)
+  const dayNr = (date.getDay() + 6) % 7;
+  console.log('dayNr', dayNr)
+  target.setDate(target.getDate() - dayNr + 3);
+  const firstThursday = target.valueOf();
+  console.log('firstThursday', firstThursday)
+  target.setMonth(0, 1);
+  console.log('target', target)
+  if (target.getDay() !== 4) {
+    target.setMonth(0, 1 + ((4 - target.getDay()) + 7) % 7);
+  }
+  return 1 + Math.ceil((firstThursday - target) / 604800000);
+};
+
+const CalendarView = ({ attendance, currentYear, currentMonth }) => {
+  const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+  const firstDay = new Date(currentYear, currentMonth, 1).getDay(); // 0 is Sunday
+  
+  // Adjust for Monday start if needed
+  const adjustedFirstDay = firstDay === 0 ? 6 : firstDay - 1; 
+
+  const days = [];
+  for (let i = 0; i < adjustedFirstDay; i++) days.push(null);
+  for (let i = 1; i <= daysInMonth; i++) days.push(i);
+
+  const getDayStatus = (day) => {
+    if (!day) return null;
+    const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    const record = attendance.calender.find(a => a.date === dateStr);
+    
+    // Check if future
+    const checkDate = new Date(currentYear, currentMonth, day);
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    
+    if (checkDate > today) return "future";
+    if (!record) return "absent"; 
+    
+    if (record) return record.present ? "present" : "absent";
+    return "no-data";
+  };
+
+  return (
+    <div className="w-full">
+      <div className="grid grid-cols-7 gap-1 mb-2">
+        {["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"].map(d => (
+          <div key={d} className="text-center text-xs text-gray-400 font-medium py-1">{d}</div>
+        ))}
+      </div>
+      <div className="grid grid-cols-7 gap-1">
+        {days.map((day, idx) => {
+          if (!day) return <div key={`empty-${idx}`} className="aspect-square"></div>;
+          
+          const status = getDayStatus(day);
+          let bgClass = "bg-gray-50 text-gray-400"; // Future/No data
+          
+          if (status === "present") bgClass = "bg-green-100 text-green-700 font-bold border border-green-200";
+          if (status === "absent") bgClass = "bg-red-100 text-red-700 font-bold border border-red-200";
+          if (status === "no-data") bgClass = "bg-gray-50 text-gray-400";
+
+          const isToday = day === new Date().getDate();
+
+          return (
+            <div key={day} className={`aspect-square rounded-xl flex items-center justify-center text-sm transition-all ${bgClass} ${isToday ? 'ring-2 ring-orange-400 ring-offset-2' : ''}`}>
+              {day}
             </div>
-
-            {activeDetectionTab === "daily" ? (
-              /* Daily Detection Content */
-              <div className="bg-gradient-to-b from-white to-orange-50 rounded-2xl p-5 shadow-sm space-y-4">
-                <h3 className="text-base font-semibold text-gray-800 mb-2">PPE Compliance Analysis</h3>
-                <p className="text-sm text-gray-500 mb-4">
-                  Which safety equipment you're missing most often this week
-                </p>
-
-                <div className="space-y-4">
-                  {/* First Row */}
-                  <div className="grid grid-cols-2 gap-4">
-                    {/* Total Violations */}
-                    <div className="bg-red-50 border border-red-200 p-4 rounded-xl text-center">
-                      <div className="flex flex-col items-center">
-                        <AlertTriangle className="w-5 h-5 text-red-600 mb-2" />
-                        <div className="text-sm font-semibold text-red-700">Total Violations</div>
-                        <div className="text-xl font-bold text-red-800 mt-1">{weeklyData.violations || 0}</div>
-                      </div>
-                    </div>
-
-                    {/* Working Days */}
-                    <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-xl text-center">
-                      <div className="flex flex-col items-center">
-                        <Calendar className="w-5 h-5 text-yellow-600 mb-2" />
-                        <div className="text-sm font-semibold text-yellow-700">Working Days</div>
-                        <div className="text-xl font-bold text-yellow-800 mt-1">{weeklyData.days_count || 0}</div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Second Row - Most Missed items */}
-                  <div className="bg-red-50 border border-red-200 p-4 rounded-xl text-center">
-                    <div className="flex flex-col items-center">
-                      <Eye className="w-5 h-5 text-red-600 mb-2" />
-                      <span className="text-xs text-gray-600 uppercase tracking-wide font-medium">Most Missed</span>
-                      <span className="text-lg font-semibold text-red-700 mt-1">
-                        {weeklyData.most_missed_item ? weeklyData.most_missed_item.replace('_', ' ').toUpperCase() : 'N/A'}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Bar Chart */}
-{weeklyData.bar_chart_data && Object.keys(weeklyData.bar_chart_data).length > 0 && (
-  <div className="bg-white rounded-xl p-4 mt-4">
-    <h4 className="text-sm text-gray-700 font-medium mb-2">Times Missed</h4>
-    <div className="h-40 flex items-end justify-around">
-      {Object.entries(weeklyData.bar_chart_data).map(([item, count], index) => (
-        <div key={item} className="flex flex-col items-center">
-          <div
-            className="w-6 bg-red-500 rounded-t"
-            style={{ height: `${Math.min(count * 10, 70)}px` }}
-          ></div>
-          <span className="text-xs text-gray-600 mt-10 transform -rotate-45 origin-top-left whitespace-nowrap">
-            {item.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ').replace('Ear protection', 'Ear')}
-          </span>
-        </div>
-      ))}
-    </div>
-  </div>
-)}
-                {/* Focus Area */}
-                {weeklyData.most_missed_item && (
-                  <div className="bg-red-50 p-4 rounded-xl mt-4">
-                    <div className="flex items-start gap-2">
-                      <span className="text-red-600 text-lg">⚠️</span>
-                      <p className="text-sm text-gray-700">
-                        {weeklyData.most_missed_item.replace('_', ' ')} was missed {weeklyData.bar_chart_data?.[weeklyData.most_missed_item] || 0} times. Remember to wear it every day!
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {/* Best Compliance */}
-                {weeklyData.best_compliance_item && (
-                  <div className="bg-green-50 p-4 rounded-xl">
-                    <div className="flex items-start gap-2">
-                      <span className="text-green-600 text-lg"><LucideBookCheck /></span>
-                      <p className="text-sm text-gray-700">
-                        {weeklyData.best_compliance_item.replace('_', ' ')} – Great compliance this week!
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            ) : (
-              /* Weekly Summary Content */
-              <div className="space-y-6">
-                {/* Today's PPE Detection Results */}
-<div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-5">
-  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3">
-    <h3 className="text-sm font-semibold text-gray-800">
-      Today's PPE Detection Results
-    </h3>
-
-    {/* Points section */}
-    <div className="text-sm sm:text-sm font-bold text-gray-900 mt-1 sm:mt-0 bg-yellow-500 w-[120px] p-1 rounded-full text-center">
-      {ppe.today_point || 0} <span className="text-gray-500 text-sm">/ 45 points</span>
-    </div>
-  </div>
-
-  <div className="text-sm text-gray-500 text-center sm:text-left">
-    Real-time safety equipment detection
-  </div>
-
-
-
-                  {/* Bar Chart */}
-{ppe.today_status && Object.keys(ppe.today_status).length > 0 && (
-  <div className="relative h-56 mb-6">
-    <div className="absolute bottom-0 left-0 right-0 flex items-end justify-between px-6">
-      {/* Y-axis labels + grid lines */}
-      <div className="flex flex-col justify-between h-48 text-[11px] text-gray-400 absolute left-0 top-0 w-full">
-        {[12, 9, 6, 3, 0].map((val) => (
-          <div key={val} className="flex items-center">
-            <span className="w-6 text-right mr-1">{val}</span>
-            <div className="border-t border-gray-200 flex-1"></div>
-          </div>
-        ))}
-      </div>
-
-      {/* Bars */}
-      <div className="flex justify-around w-full ml-8 items-end z-10">
-        {Object.entries(ppe.today_status).map(([item, status]) => (
-          <div key={item} className="flex flex-col items-center">
-            <div
-              className={`w-8 sm:w-10 rounded-md transition-all duration-300 ${
-                status ? 'bg-green-500' : 'bg-red-500'
-              }`}
-              style={{ height: `${status ? 96 : 32}px` }}
-            ></div>
-            <span className="text-[11px] text-gray-700 mt-2 text-center">
-              {item
-                .split('_')
-                .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-                .join(' ')
-                .replace('Ear protection', 'Ear')}
-            </span>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
-  </div>
-)}
-</div>
-
-                {/* Detection Results List */}
-                <div className="space-y-3">
-                  {ppe.today_status && Object.entries(ppe.today_status).map(([item, status]) => {
-                    const itemIcons = {
-                      helmet: HardHat,
-                      vest: Shield,
-                      gloves: Shield,
-                      glasses: Glasses,
-                      ear_protection: Ear
-                    };
-
-                    const IconComponent = itemIcons[item] || Shield;
-                    const points = status ? 20 : 0;
-
-                    return (
-                      <div key={item} className={`flex items-center justify-between ${status ? 'bg-green-50' : 'bg-red-50'} p-3 rounded-xl`}>
-                        <div className="flex items-center gap-3">
-                          <div className={`w-8 h-8 ${status ? 'bg-green-100' : 'bg-red-100'} rounded-full flex items-center justify-center`}>
-                            <IconComponent className={`w-4 h-4 ${status ? 'text-green-600' : 'text-red-600'}`} />
-                          </div>
-                          <div>
-                            <div className="text-sm font-semibold text-gray-800">
-                              {item.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
-                              {status ? ' +20 Points' : ' Missing'}
-                            </div>
-                          </div>
-                        </div>
-                        <div className={`${status ? 'text-green-600' : 'text-red-600'} font-semibold text-sm`}>
-                          {status ? '+20 Points' : '0 Points'}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* Summary Message */}
-                {ppe.items_missed && ppe.items_missed.length > 0 && (
-                  <div className="bg-amber-50 border border-amber-200 p-4 rounded-xl">
-                    <div className="flex items-start gap-3">
-                      <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-                      <p className="text-sm text-gray-700">
-                        You missed {ppe.items_missed.join(', ')} today — wear all PPE to earn full points!
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    </>
   );
 };
 

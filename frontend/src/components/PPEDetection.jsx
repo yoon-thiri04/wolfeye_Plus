@@ -3,6 +3,13 @@ import Webcam from "react-webcam";
 import axios from "axios";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Camera, Wifi, Sun, Bell, User } from "lucide-react";
+import ppeIncompleteSound from '../assets/sound_effect/ppe-not-success.mp3';
+import ppeCompleteSound from '../assets/sound_effect/ppe-success.mp3';
+import glove from "../assets/sound_effect/pls-show-ur-gloves.mp3";
+import google from "../assets/sound_effect/pls-show-ur-googles.mp3";
+import hat from "../assets/sound_effect/pls-show-ur-hat-cleary.mp3";
+import vest from "../assets/sound_effect/pls-show-ur-vest.mp3";
+import ear_protection from "../assets/sound_effect/pls_show_ur_ear-pro_clearly.mp3";
 
 export default function PPEDetection() {
   const webcamRef = useRef(null);
@@ -14,13 +21,81 @@ export default function PPEDetection() {
   const [cameraActive, setCameraActive] = useState(true);
   const [detectedPerson, setDetectedPerson] = useState(null);
   const [checkInTime, setCheckInTime] = useState("");
+  const [boxScale, setBoxScale] = useState({ x: 1, y: 1 });
   const intervalRef = useRef(null);
+  const containerRef = useRef(null);
   const { state } = useLocation();
   const navigate = useNavigate();
   const email = state?.email;
   const lastSpokenRef = useRef([]);
   const speechQueueRef = useRef([]);
   const isSpeakingRef = useRef(false);
+  const [sessionError, setSessionError] = useState(false);
+
+  // Create audio objects for each sound file
+  const audioRefs = useRef({
+    ppeIncomplete: new Audio(ppeIncompleteSound),
+    ppeComplete: new Audio(ppeCompleteSound),
+    gloves: new Audio(glove),
+    goggles: new Audio(google),
+    helmet: new Audio(hat),
+    vest: new Audio(vest),
+    ear_protection: new Audio(ear_protection)
+  });
+
+  // Function to stop all audio playback
+  const stopAllAudio = () => {
+    Object.values(audioRefs.current).forEach(audio => {
+      audio.pause();
+      audio.currentTime = 0;
+    });
+    // Also stop any speech synthesis
+    window.speechSynthesis.cancel();
+    isSpeakingRef.current = false;
+    speechQueueRef.current = [];
+  };
+
+  // Function to play priority audio (ppe-not-success or ppe-success)
+  const playPriorityAudio = (audioKey, onEndCallback) => {
+    // First stop all audio
+    stopAllAudio();
+
+    const audio = audioRefs.current[audioKey];
+    if (!audio) {
+      console.error(`Audio for key ${audioKey} not found`);
+      onEndCallback && onEndCallback();
+      return;
+    }
+
+    // Reset audio to start
+    audio.currentTime = 0;
+
+    // Set up onended handler
+    audio.onended = () => {
+      audio.onended = null; // Clean up
+      onEndCallback && onEndCallback();
+    };
+
+    // Play the audio
+    audio.play().catch(error => {
+      console.error('Error playing priority audio:', error);
+      // If audio fails, call the callback immediately
+      onEndCallback && onEndCallback();
+    });
+  };
+
+  // Initialize audio properties and set up cleanup
+  useEffect(() => {
+    Object.values(audioRefs.current).forEach(audio => {
+      audio.preload = 'auto';
+      audio.volume = 1.0;
+    });
+
+    // Clean up function to stop all audio when component unmounts
+    return () => {
+      stopAllAudio();
+    };
+  }, []);
 
   // Get company authentication token
   const getCompanyAuthToken = () => {
@@ -29,7 +104,7 @@ export default function PPEDetection() {
   };
 
   const api = axios.create({
-    baseURL: "http://localhost:8000",
+    baseURL: "/api",
   });
 
   api.interceptors.request.use(
@@ -46,51 +121,123 @@ export default function PPEDetection() {
   );
 
   const speakNext = () => {
-  if (speechQueueRef.current.length === 0) {
-    isSpeakingRef.current = false;
-    return;
-  }
+    if (speechQueueRef.current.length === 0) {
+      isSpeakingRef.current = false;
+      return;
+    }
 
-  isSpeakingRef.current = true;
-  const nextItem = speechQueueRef.current.shift();
-  const msg = new SpeechSynthesisUtterance(`Please show your ${nextItem} clearly`);
-  msg.rate = 1;
+    isSpeakingRef.current = true;
+    const nextItem = speechQueueRef.current.shift();
 
-  msg.onend = () => {
-    setTimeout(() => {
-      speakNext();
-    }, 1500);
+    // Map missing items to corresponding audio files
+    const audioMap = {
+      'gloves': 'gloves',
+      'goggles': 'goggles',
+      'helmet': 'helmet',
+      'vest': 'vest',
+      'ear_protection': 'ear_protection'
+    };
+
+    const audioKey = audioMap[nextItem];
+    if (audioKey && audioRefs.current[audioKey]) {
+      const audio = audioRefs.current[audioKey];
+
+      // Check if we should continue playing
+      if (!isPriorityAudioPlaying()) {
+        // Reset audio to start if already playing
+        audio.currentTime = 0;
+
+        // Play the audio
+        audio.play().catch(error => {
+          console.error('Error playing audio:', error);
+          isSpeakingRef.current = false;
+          speakNext();
+        });
+
+        // When audio ends, wait and play next
+        audio.onended = () => {
+          setTimeout(() => {
+            speakNext();
+          }, 1000);
+        };
+      } else {
+        // Priority audio is playing, skip this and clear queue
+        isSpeakingRef.current = false;
+        speechQueueRef.current = [];
+      }
+//     } else {
+//       if (!isPriorityAudioPlaying()) {
+//         const msg = new SpeechSynthesisUtterance(`Please show your ${nextItem} clearly`);
+//         msg.rate = 1;
+//         msg.lang = 'en-US';
+//         msg.onend = () => {
+//           setTimeout(() => {
+//             speakNext();
+//           }, 1500);
+//         };
+//         window.speechSynthesis.speak(msg);
+//       } else {
+//         isSpeakingRef.current = false;
+//         speechQueueRef.current = [];
+//       }
+//     }
   };
 
-  window.speechSynthesis.speak(msg);
-};
+  // Helper function to check if priority audio is playing
+  const isPriorityAudioPlaying = () => {
+    const priorityAudios = [audioRefs.current.ppeIncomplete, audioRefs.current.ppeComplete];
+    return priorityAudios.some(audio => !audio.paused && audio.currentTime > 0);
+  };
 
+  const startSession = async (personEmail) => {
+    if (!personEmail) return;
+    setSessionError(false);
+    setPrompt("Starting session...");
+    try {
+      const res = await api.post("/detect/start_session", {
+        person_id: personEmail,
+      });
+      setSessionId(res.data.session_id);
+      setPrompt("Session started. Initializing camera...");
+
+      const now = new Date();
+      setCheckInTime(
+        now.toLocaleTimeString("en-US", {
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+          hour12: true,
+        })
+      );
+    } catch (err) {
+      console.error("Error starting session:", err);
+      setPrompt("Failed to start session. Please try again.");
+      setSessionError(true);
+    }
+  };
 
   useEffect(() => {
-    const start = async () => {
-      try {
-        const res = await api.post("http://localhost:8000/detect/start_session", {
-          person_id: email,
-        });
-        setSessionId(res.data.session_id);
-        setPrompt("Session started. Initializing camera...");
-
-        const now = new Date();
-        setCheckInTime(
-          now.toLocaleTimeString("en-US", {
-            hour: "2-digit",
-            minute: "2-digit",
-            second: "2-digit",
-            hour12: true,
-          })
-        );
-      } catch (err) {
-        console.error("Error starting session:", err);
-        setPrompt("Failed to start session. Please try again.");
-      }
-    };
-    start();
+    startSession(email);
   }, [email]);
+
+  useEffect(() => {
+    const updateScale = () => {
+      if (!containerRef.current || !webcamRef.current) return;
+      const container = containerRef.current.getBoundingClientRect();
+      const video = webcamRef.current.video;
+      if (!video) return;
+
+      const xScale = container.width / video.videoWidth;
+      const yScale = container.height / video.videoHeight;
+      setBoxScale({ x: xScale, y: yScale });
+    };
+    window.addEventListener("resize", updateScale);
+    const interval = setInterval(updateScale, 1000);
+    return () => {
+      window.removeEventListener("resize", updateScale);
+      clearInterval(interval);
+    };
+  }, []);
 
   const detect = async () => {
     if (!webcamRef.current || !sessionId || !cameraActive) return;
@@ -99,7 +246,7 @@ export default function PPEDetection() {
     if (!imageSrc) return;
 
     try {
-      const res = await api.post("http://localhost:8000/detect/ppe_detect", {
+      const res = await api.post("/detect/ppe_detect", {
         image: imageSrc,
         session_id: sessionId,
       });
@@ -148,55 +295,72 @@ export default function PPEDetection() {
 
         // PPE not complete when miss 3 or above 3 items
         if (missingCount >= 3) {
-          const warningMsg = new SpeechSynthesisUtterance(
-            "Your PPE detection is not complete. Please wear missing items properly and make redetection."
-          );
-          warningMsg.rate = 1;
-
-          warningMsg.onend = () => {
-            console.log("PPE incomplete - navigating. Remaining employees:", remainingEmployees);
-            // If no employees remaining, go to homepage
-            if (remainingEmployees <= 0) {
-              console.log("No employees remaining, going to homepage");
-              navigate("/facewebcam");
-            }
-            else {
-              console.log("Employees remaining, going to facewebcam");
-              navigate("/facewebcam");
-            }
+          // Create a wrapper function for navigation that stops audio first
+          const navigateWithAudioStop = (path) => {
+            stopAllAudio();
+            setTimeout(() => {
+              console.log("PPE incomplete - navigating. Remaining employees:", remainingEmployees);
+              // If no employees remaining, go to homepage
+              if (remainingEmployees <= 0) {
+                console.log("No employees remaining, going to homepage");
+                navigate("/facewebcam");
+              }
+              else {
+                console.log("Employees remaining, going to facewebcam");
+                navigate("/facewebcam");
+              }
+            }, 100);
           };
-          window.speechSynthesis.speak(warningMsg);
+
+          playPriorityAudio('ppeIncomplete', () => {
+            navigateWithAudioStop();
+          });
+
+          const response = axios.post("api/iot/trigger_unlock", {
+              device_id: "DOOR_001",
+              duration: 5000
+          });
+          console.log(response)
         }
         // PPE complete when less than 3 missing items
         else {
-          const completeMsg = new SpeechSynthesisUtterance("PPE detection complete");
-          completeMsg.rate = 1;
+          // Create a wrapper function for navigation that stops audio first
+          const navigateWithAudioStop = () => {
+            stopAllAudio();
+            setTimeout(() => {
+              const ppeItems = data.ppe_status || {};
+              const totalItems = Object.keys(ppeItems).length;
+              const wornItems = Object.values(ppeItems).filter(Boolean).length;
+              const points = wornItems * (100 / totalItems);
 
-          completeMsg.onend = () => {
-            const ppeItems = data.ppe_status || {};
-            const totalItems = Object.keys(ppeItems).length;
-            const wornItems = Object.values(ppeItems).filter(Boolean).length;
-            const points = wornItems * (100 / totalItems);
+              const employeeData = {
+                  name: data.person_info?.name || email,
+                  status: "Attend",
+                  checkIn: checkInTime,
+                  earn: data.points || 0,
+                  ppeItems: ppeItems,
+              };
 
-            const employeeData = {
-                name: data.person_info?.name || email,
-                status: "Attend",
-                checkIn: checkInTime,
-                earn: data.points || 0,
-                ppeItems: ppeItems,
-            };
+              console.log("PPE complete - going to summary. Remaining employees:", remainingEmployees);
 
-            console.log("PPE complete - going to summary. Remaining employees:", remainingEmployees);
-            navigate("/summary", {
-              state: {
-                employeeData,
-                remainingEmployees
-              }
-            });
+              const response = axios.post("api/iot/trigger_lock", {
+                  device_id: "DOOR_001",
+                  duration: 5000
+              });
+              console.log(response)
 
+              navigate("/summary", {
+                state: {
+                  employeeData,
+                  remainingEmployees
+                }
+              });
+            }, 100);
           };
 
-          window.speechSynthesis.speak(completeMsg);
+          playPriorityAudio('ppeComplete', () => {
+            navigateWithAudioStop();
+          });
         }
       }
     } catch (err) {
@@ -219,10 +383,10 @@ export default function PPEDetection() {
         style={{
           position: "absolute",
           border: "2px solid #00FF88",
-          top: det.bbox[1],
-          left: det.bbox[0],
-          width: det.bbox[2] - det.bbox[0],
-          height: det.bbox[3] - det.bbox[1],
+          top: det.bbox[1] * boxScale.y,
+          left: det.bbox[0] * boxScale.x,
+          width: (det.bbox[2] - det.bbox[0]) * boxScale.x,
+          height: (det.bbox[3] - det.bbox[1]) * boxScale.y,
           color: "#00FF88",
           fontWeight: "bold",
           pointerEvents: "none",
@@ -247,11 +411,11 @@ export default function PPEDetection() {
   };
 
   return (
-    <div className="min-h-screen bg-white py-8 px-6">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-white py-6 px-4 md:py-8 md:px-6">
       <div className="max-w-7xl mx-auto">
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900 text-left">
-            Real Time Safety Detection (PPE)
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 text-left">
+            Real Time <span className="text-[#ea7c3b]">Safety Detection</span> (PPE)
           </h1>
           <p className="text-gray-600 text-sm mt-2 text-left">
             Your safety is your strength. WolfEye+ ensures every worker starts the day
@@ -261,63 +425,97 @@ export default function PPEDetection() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-lg font-semibold text-gray-900">Camera Feed</h2>
-                <div className="flex items-center gap-3">
-                  <Wifi className="w-5 h-5 text-green-500" />
-                  <Sun className="w-5 h-5 text-green-500" />
+            {sessionError && (
+              <div className="mb-4 bg-red-50 border border-red-200 rounded-xl p-4 flex items-center justify-between">
+                <div className="flex items-center gap-2 text-red-700">
+                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                     <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                   </svg>
+                   <span>{prompt}</span>
                 </div>
-              </div>
-
-              <div className="relative bg-gradient-to-br from-green-100 to-green-200 rounded-lg overflow-hidden">
-                <div className="absolute top-4 right-4 z-10">
-                  <span className="bg-red-500 text-white text-xs font-semibold px-3 py-1 rounded-full flex items-center gap-1">
-                    <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
-                    LIVE
-                  </span>
-                </div>
-
-                <div className="aspect-[4/3] flex items-center justify-center relative">
-                  {cameraActive ? (
-                    <>
-                      <Webcam
-                        ref={webcamRef}
-                        mirrored={true}
-                        screenshotFormat="image/jpeg"
-                        className="w-full h-full object-cover"
-                      />
-                      {renderBoxes()}
-                      {detections.length === 0 && (
-                        <div className="absolute inset-0 flex flex-col items-center justify-center text-green-700">
-                          {/*<div className="w-24 h-24 border-4 border-green-400 rounded-full animate-pulse mb-4"></div>*/}
-                          {/*<p className="text-lg font-medium">Camera Active</p>*/}
-                          {/*<p className="text-sm text-green-600">Scanning for faces...</p>*/}
-                        </div>
-                      )}
-                    </>
-                  ) : (
-                    <div className="absolute inset-0 flex items-center justify-center text-gray-500">
-                      <p className="text-lg font-medium">Camera Stopped</p>
-                    </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => {
+                      stopAllAudio();
+                      navigate('/facewebcam');
+                    }}
+                    className="px-4 py-1.5 bg-white text-gray-700 text-sm font-medium rounded-lg border border-gray-200 hover:bg-gray-50"
+                  >
+                    Go Back
+                  </button>
+                  {email && (
+                    <button
+                      onClick={() => {
+                        stopAllAudio();
+                        startSession(email);
+                      }}
+                      className="px-4 py-1.5 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700"
+                    >
+                      Retry
+                    </button>
                   )}
                 </div>
               </div>
+            )}
+            <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg border border-white/50 p-4 sm:p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-lg font-semibold text-gray-900">Camera Feed</h2>
+                <div className="flex items-center gap-3">
+                  <Wifi className="w-5 h-5 text-[#ea7c3b]" />
+                  <Sun className="w-5 h-5 text-[#ea7c3b]" />
+                </div>
+              </div>
 
-              <div className="flex justify-center gap-3 mt-4">
+              <div className="relative bg-white rounded-2xl overflow-hidden shadow-inner border border-gray-100">
+                <div className="bg-gradient-to-br from-orange-50 to-white rounded-2xl overflow-hidden relative">
+                  <div className="absolute top-4 right-4 z-10">
+                    <span className="bg-red-500 text-white text-xs font-semibold px-3 py-1 rounded-full flex items-center gap-1">
+                      <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
+                      LIVE
+                    </span>
+                  </div>
+
+                  <div className="aspect-[4/3] flex items-center justify-center relative">
+                    {cameraActive ? (
+                      <>
+                        <Webcam
+                          ref={webcamRef}
+                          mirrored={true}
+                          screenshotFormat="image/jpeg"
+                          className="w-full h-full object-contain"
+                        />
+                        {renderBoxes()}
+                        {detections.length === 0 && (
+                          <div className="absolute inset-0 flex flex-col items-center justify-center text-green-700">
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center text-gray-500">
+                        <p className="text-lg font-medium">Camera Stopped</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row justify-center gap-3 mt-4">
                 <button
                   onClick={() => setCameraActive(true)}
                   disabled={cameraActive}
-                  className="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-50 flex items-center gap-2 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="bg-gradient-to-r from-[#ea7c3b] to-[#f97316] text-white px-6 py-2.5 rounded-xl hover:shadow-lg hover:shadow-orange-500/30 transition-all duration-300 flex items-center justify-center gap-2 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto"
                 >
                   <Camera className="w-4 h-4" />
                   Start Camera
                 </button>
 
                 <button
-                  onClick={() => setCameraActive(false)}
+                  onClick={() => {
+                    setCameraActive(false);
+                    stopAllAudio();
+                  }}
                   disabled={!cameraActive}
-                  className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 flex items-center gap-2 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="bg-white border border-gray-200 text-gray-700 px-6 py-2.5 rounded-xl hover:bg-gray-50 flex items-center justify-center gap-2 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto"
                 >
                   <Camera className="w-4 h-4" />
                   Stop Camera
@@ -327,14 +525,14 @@ export default function PPEDetection() {
           </div>
 
           <div className="space-y-6">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-5 text-left">
+            <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg border border-white/50 p-5 text-left">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-semibold text-gray-900">System Alert</h3>
                 <Bell className="w-5 h-5 text-gray-400" />
               </div>
 
               {missingItems.length > 0 ? (
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <div className="bg-yellow-50/80 backdrop-blur-sm border border-yellow-200 rounded-xl p-4">
                   <div className="flex gap-3">
                     <div className="flex-shrink-0">
                       <User className="w-5 h-5 text-yellow-700" />
@@ -350,7 +548,7 @@ export default function PPEDetection() {
                   </div>
                 </div>
               ) : (
-                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                <div className="bg-green-50/80 backdrop-blur-sm border border-green-200 rounded-xl p-4">
                   <div className="flex gap-3">
                     <div className="flex-shrink-0">
                       <User className="w-5 h-5 text-green-700" />
@@ -364,7 +562,7 @@ export default function PPEDetection() {
               )}
             </div>
 
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-5">
+            <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg border border-white/50 p-5">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Session Status</h3>
 
               <div className="space-y-3">
@@ -391,14 +589,14 @@ export default function PPEDetection() {
               </div>
             </div>
 
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-5">
+            <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg border border-white/50 p-5">
               <div className="flex items-center gap-2 mb-4">
-                <User className="w-5 h-5 text-green-600" />
+                <User className="w-5 h-5 text-[#ea7c3b]" />
                 <h3 className="text-lg font-semibold text-gray-900">Detected Person</h3>
               </div>
 
               {detectedPerson || email ? (
-                <div className="bg-green-50 rounded-lg p-4 border border-green-200 flex flex-col items-start justify-center space-y-1">
+                <div className="bg-green-50/80 backdrop-blur-sm rounded-xl p-4 border border-green-200 flex flex-col items-start justify-center space-y-1">
                   {/* Name */}
                   <div className="flex items-center gap-2">
                     <div className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0"></div>
@@ -423,7 +621,7 @@ export default function PPEDetection() {
                   </p>
                 </div>
               ) : (
-                <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                <div className="bg-gray-50/80 backdrop-blur-sm rounded-xl p-4 border border-gray-200">
                   <p className="text-sm text-gray-500 text-center">
                     No person detected yet
                   </p>

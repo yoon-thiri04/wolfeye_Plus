@@ -1,0 +1,47 @@
+FROM node:20-alpine AS frontend-build
+WORKDIR /app/frontend
+COPY frontend/package*.json ./
+RUN npm ci
+COPY frontend/ .
+RUN npm run build
+
+FROM python:3.11-slim
+WORKDIR /app
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
+ENV VIRTUAL_ENV=/app/venv
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    libgl1 \
+    libglib2.0-0 \
+    libsm6 \
+    libxrender1 \
+    libxext6 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create virtual environment
+RUN python -m venv $VIRTUAL_ENV
+
+COPY backend/requirements.txt /app/backend/requirements.txt
+RUN pip install --no-cache-dir -r /app/backend/requirements.txt
+
+# Create necessary directories
+RUN mkdir -p /app/backend/employee_profiles /app/backend/temp_uploads /root/.deepface/weights
+
+COPY backend /app/backend
+COPY --from=frontend-build /app/frontend/dist /app/frontend/dist
+
+# Pre-download DeepFace models
+RUN python -c "from deepface import DeepFace; DeepFace.build_model('VGG-Face')"
+
+# Create a non-root user and switch to it
+# Note: We keep running as root for now to ensure access to the downloaded weights in /root/.deepface
+# Or we can move the weights to a shared location if needed. 
+# For simplicity in this setup, we'll comment out switching to appuser to avoid permission issues with the weights volume.
+# RUN useradd -m appuser && \
+#     chown -R appuser:appuser /app /root/.deepface
+# USER appuser
+
+EXPOSE 8000
+CMD ["uvicorn","backend.main:app","--host","0.0.0.0","--port","8000"]

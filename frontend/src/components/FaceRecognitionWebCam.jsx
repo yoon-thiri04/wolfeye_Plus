@@ -3,31 +3,35 @@ import Webcam from "react-webcam";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { Camera, Wifi, Sun, CheckCircle2, Users, Bell } from "lucide-react";
+import faceverificiationsuccessSound from "../assets/sound_effect/face_recognition_success.mp3";
+import faceverificiationnotsuccessSound from "../assets/sound_effect/face-recognition-notsuccess.mp3";
 
 export default function LiveFaceVerify() {
   const webcamRef = useRef(null);
   const containerRef = useRef(null);
   const alertAudioRef = useRef(null);
+  const audioRef = useRef(null);
+  const notSuccessAudioRef = useRef(null);
 
   useEffect(() => {
-    alertAudioRef.current = new Audio(`${import.meta.env.BASE_URL}alert.mp3`);
-    alertAudioRef.current.preload = "auto";
+  alertAudioRef.current = new Audio(faceverificiationnotsuccessSound);
+  alertAudioRef.current.preload = "auto";
 
-    const preloadAudio = async () => {
-      try {
-        await alertAudioRef.current.load();
-        alertAudioRef.current.volume = 0;
-        await alertAudioRef.current.play().catch(() => {});
-        alertAudioRef.current.pause();
-        alertAudioRef.current.currentTime = 0;
-        alertAudioRef.current.volume = 1;
-      } catch (err) {
-        console.log("Audio preload completed");
-      }
-    };
+  const preloadAudio = async () => {
+    try {
+      await alertAudioRef.current.load();
+      alertAudioRef.current.volume = 0;
+      await alertAudioRef.current.play().catch(() => {});
+      alertAudioRef.current.pause();
+      alertAudioRef.current.currentTime = 0;
+      alertAudioRef.current.volume = 1;
+    } catch (err) {
+      console.log("Audio preload completed");
+    }
+  };
 
-    preloadAudio();
-  }, []);
+  preloadAudio();
+}, []);
 
   const [isActive, setIsActive] = useState(false);
   const [result, setResult] = useState(null);
@@ -47,19 +51,25 @@ export default function LiveFaceVerify() {
 
   // Cleanup function to stop all audio and speech
   const stopAllAudio = () => {
-    // Stop speech synthesis
-    if (window.speechSynthesis && window.speechSynthesis.speaking) {
-      window.speechSynthesis.cancel();
-    }
+  // Stop speech synthesis
+  if (window.speechSynthesis && window.speechSynthesis.speaking) {
+    window.speechSynthesis.cancel();
+  }
 
-    // Stop alert audio
-    if (alertAudioRef.current) {
-      alertAudioRef.current.pause();
-      alertAudioRef.current.currentTime = 0;
-    }
+  // Stop alert audio
+  if (alertAudioRef.current) {
+    alertAudioRef.current.pause();
+    alertAudioRef.current.currentTime = 0;
+  }
 
-    setCountdown(null);
-  };
+  // Stop not-success audio
+  if (notSuccessAudioRef.current) {
+    notSuccessAudioRef.current.pause();
+    notSuccessAudioRef.current.currentTime = 0;
+  }
+
+  setCountdown(null);
+};
 
   useEffect(() => {
     return () => {
@@ -120,7 +130,7 @@ export default function LiveFaceVerify() {
   };
 
   const api = axios.create({
-    baseURL: "http://localhost:8000",
+    baseURL: "/api",
     withCredentials: true,
   });
 
@@ -168,7 +178,7 @@ export default function LiveFaceVerify() {
       console.log("Ending detection for company:", companyId);
 
       const res = await api.post(
-        "http://localhost:8000/company/end_detect",
+        "/company/end_detect",
         {
           end: true,
           company_id: companyId
@@ -186,31 +196,48 @@ export default function LiveFaceVerify() {
     }
   };
 
+  const [redirectEmail, setRedirectEmail] = useState(null);
+
+  useEffect(() => {
+    if (countdown === 0 && redirectEmail) {
+      stopAllAudio();
+      navigate("/ppe-detect", { state: { email: redirectEmail } });
+    }
+  }, [countdown, redirectEmail, navigate]);
+
   const handleFaceSuccess = (email) => {
-    stopAllAudio();
+  stopAllAudio();
 
-    const utter = new SpeechSynthesisUtterance("Face recognition success");
-    utter.pitch = 1;
-    utter.rate = 1;
-    speechUtteranceRef.current = utter;
+  audioRef.current = new Audio(faceverificiationsuccessSound);
+  audioRef.current.play();
 
-    utter.onend = () => {
-      setCountdown(3);
-      const countdownInterval = setInterval(() => {
-        setCountdown((prev) => {
-          if (prev === 1) {
-            clearInterval(countdownInterval);
-            // Stop audio before navigation
-            stopAllAudio();
-            navigate("/ppe-detect", { state: { email } });
-            return null;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    };
-    window.speechSynthesis.speak(utter);
+  audioRef.current.onended = () => {
+    setRedirectEmail(email);
+    setCountdown(3);
+
+    const countdownInterval = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(countdownInterval);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
   };
+};
+
+// for face not-success
+const handleFaceNotSuccess = () => {
+  stopAllAudio();
+
+  notSuccessAudioRef.current = new Audio(faceverificiationnotsuccessSound);
+  notSuccessAudioRef.current.play();
+
+  // Show alert for unknown face
+  setShowAlert(true);
+  setTimeout(() => setShowAlert(false), 4000);
+};
 
   const playAlertSound = async () => {
     if (!alertAudioRef.current) return;
@@ -245,7 +272,7 @@ export default function LiveFaceVerify() {
 
     try {
       console.log("Sending face verification request...");
-      const res = await api.post("/employee/verify/", formData);
+      const res = await api.post("/employee/verify", formData); // Removed trailing slash
 
       setResult(res.data);
       setAuthError(false);
@@ -259,32 +286,29 @@ export default function LiveFaceVerify() {
       }
 
       if (res.data.status === "Identified") {
-        clearInterval(intervalRef.current);
-        handleFaceSuccess(res.data.email);
-      } else {
-        // Unknown face alert
-        setShowAlert(true);
-        playAlertSound();
-        setTimeout(() => setShowAlert(false), 4000);
-      }
+  clearInterval(intervalRef.current);
+  handleFaceSuccess(res.data.email);
+} else {
+  // Unknown face detected - play not-success sound
+  handleFaceNotSuccess();
+}
     } catch (err) {
-      console.error("Face verification error:", err);
+  console.error("Face verification error:", err);
 
-      if (err.response?.status === 401) {
-        setAuthError(true);
-        setResult({
-          status: "Authentication Required",
-          detail: "Company authentication required"
-        });
-        console.log("Setting auth error to true due to 401 response");
-      } else {
-        setResult({ status: "Error", detail: err.message });
-      }
+  if (err.response?.status === 401) {
+    setAuthError(true);
+    setResult({
+      status: "Authentication Required",
+      detail: "Company authentication required"
+    });
+    console.log("Setting auth error to true due to 401 response");
+  } else {
+    setResult({ status: "Error", detail: err.message });
+  }
 
-      setShowAlert(true);
-      playAlertSound();
-      setTimeout(() => setShowAlert(false), 4000);
-    }
+  // Play not-success sound for verification errors too
+  handleFaceNotSuccess();
+}
   };
 
   const startCamera = () => {
@@ -405,12 +429,12 @@ export default function LiveFaceVerify() {
   const faceCount = result?.multiple_faces?.length || (result?.facial_area ? 1 : 0);
 
   return (
-    <div className="min-h-screen bg-white py-8 px-6">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-white py-6 px-4 md:py-8 md:px-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900 text-left">
-            Real Time Safety Detection (Face)
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 text-left">
+            Real Time <span className="text-[#ea7c3b]">Safety Detection</span> (Face)
           </h1>
           <p className="text-gray-600 text-sm mt-2 text-left">
             Your safety is your strength. WolfEye+ ensures every worker starts the day
@@ -420,7 +444,7 @@ export default function LiveFaceVerify() {
 
         {/* Authentication Error Alert */}
         {authError && (
-          <div className="mb-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4 flex items-start gap-3 text-left">
+          <div className="mb-6 bg-yellow-50/80 backdrop-blur-sm border border-yellow-200 rounded-2xl p-4 flex items-start gap-3 text-left shadow-sm">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               className="w-5 h-5 text-yellow-600 mt-0.5"
@@ -456,18 +480,18 @@ export default function LiveFaceVerify() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Camera Section */}
           <div className="lg:col-span-2">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg border border-white/50 p-4 sm:p-6">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-lg font-semibold text-gray-900">Camera Feed</h2>
                 <div className="flex items-center gap-3">
-                  <Wifi className="w-5 h-5 text-green-500" />
+                  <Wifi className="w-5 h-5 text-[#ea7c3b]" />
                   <Sun className="w-5 h-5 text-gray-400" />
                 </div>
               </div>
 
               {/* Webcam container */}
-              <div ref={containerRef} className="relative bg-white rounded-lg overflow-hidden">
-                <div className="bg-gradient-to-br from-green-100 to-green-200 rounded-lg overflow-hidden relative">
+              <div ref={containerRef} className="relative bg-white rounded-2xl overflow-hidden shadow-inner border border-gray-100">
+                <div className="bg-gradient-to-br from-orange-50 to-white rounded-2xl overflow-hidden relative">
                   <div className="absolute top-4 right-4 z-10">
                     <span className="bg-red-500 text-white text-xs font-semibold px-3 py-1 rounded-full flex items-center gap-1">
                       <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
@@ -483,8 +507,21 @@ export default function LiveFaceVerify() {
                           audio={false}
                           mirrored={true}
                           screenshotFormat="image/jpeg"
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-contain"
                           videoConstraints={{ facingMode: "user" }}
+                          onUserMediaError={(err) => {
+                            console.error("Webcam Error:", err);
+                            setAuthError(true);
+                            // Show detailed instructions for HTTP camera access
+                            const isHttp = window.location.protocol === 'http:';
+                            const isRemote = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+                            
+                            if (isHttp && isRemote) {
+                                alert(`CAMERA BLOCKED BY BROWSER\n\nTo use camera on HTTP:\n1. Open chrome://flags/#unsafely-treat-insecure-origin-as-secure\n2. Enable it and add: ${window.location.origin}\n3. Restart browser`);
+                            } else {
+                                alert("Camera access failed. Please check permissions.");
+                            }
+                          }}
                           onLoadedMetadata={() => {
                             setTimeout(() => {
                               if (containerRef.current && webcamRef.current?.video) {
@@ -551,11 +588,11 @@ export default function LiveFaceVerify() {
               )}
 
               {/* Camera Controls */}
-              <div className="flex justify-center gap-3 mt-4">
+              <div className="flex flex-col sm:flex-row justify-center gap-3 mt-4">
                 <button
                   onClick={startCamera}
                   disabled={isRunning || authError}
-                  className="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-50 flex items-center gap-2 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="bg-gradient-to-r from-[#ea7c3b] to-[#f97316] text-white px-6 py-2.5 rounded-xl hover:shadow-lg hover:shadow-orange-500/30 transition-all duration-300 flex items-center justify-center gap-2 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto"
                 >
                   <Camera className="w-4 h-4" />
                   Start Camera
@@ -564,7 +601,7 @@ export default function LiveFaceVerify() {
                 <button
                   onClick={stopCamera}
                   disabled={!isRunning}
-                  className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 flex items-center gap-2 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="bg-white border border-gray-200 text-gray-700 px-6 py-2.5 rounded-xl hover:bg-gray-50 flex items-center justify-center gap-2 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto"
                 >
                   <Camera className="w-4 h-4" />
                   Stop Camera
@@ -572,7 +609,7 @@ export default function LiveFaceVerify() {
               </div>
 
               {countdown && (
-                <div className="text-center mt-4 text-gray-600 text-sm font-medium">
+                <div className="text-center mt-4 text-[#ea7c3b] text-sm font-medium">
                   PPE Detection will start in {countdown}...
                 </div>
               )}
@@ -582,7 +619,7 @@ export default function LiveFaceVerify() {
           {/* Right Side Panels */}
           <div className="space-y-6">
             {/* System Status */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-5">
+            <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg border border-white/50 p-5">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-semibold text-gray-900">System Status</h3>
                 <Bell className="w-5 h-5 text-gray-400" />
@@ -591,7 +628,7 @@ export default function LiveFaceVerify() {
               <div className="grid grid-cols-2 gap-3">
                 <div className="flex flex-col items-start">
                   <div className="flex items-center gap-1 text-xs text-gray-600 mb-1">
-                    <Wifi className="w-4 h-4 text-green-500" />
+                    <Wifi className="w-4 h-4 text-[#ea7c3b]" />
                     <span>Network</span>
                   </div>
                   <span className="text-sm font-semibold text-gray-900">Online</span>
@@ -599,7 +636,7 @@ export default function LiveFaceVerify() {
 
                 <div className="flex flex-col items-start">
                   <div className="flex items-center gap-1 text-xs text-gray-600 mb-1">
-                    <Sun className="w-4 h-4 text-green-500" />
+                    <Sun className="w-4 h-4 text-[#ea7c3b]" />
                     <span>Lighting</span>
                   </div>
                   <span className="text-sm font-semibold text-gray-900">Good</span>
@@ -607,7 +644,7 @@ export default function LiveFaceVerify() {
 
                 <div className="flex flex-col items-start">
                   <div className="flex items-center gap-1 text-xs text-gray-600 mb-1">
-                    <CheckCircle2 className="w-4 h-4 text-green-500" />
+                    <CheckCircle2 className="w-4 h-4 text-[#ea7c3b]" />
                     <span>Camera</span>
                   </div>
                   <span className="text-sm font-semibold text-gray-900">Ready</span>
@@ -615,7 +652,7 @@ export default function LiveFaceVerify() {
 
                 <div className="flex flex-col items-start">
                   <div className="flex items-center gap-1 text-xs text-gray-600 mb-1">
-                    <Users className="w-4 h-4 text-green-500" />
+                    <Users className="w-4 h-4 text-[#ea7c3b]" />
                     <span>Faces</span>
                   </div>
                   <span className="text-sm font-semibold text-gray-900">{faceCount}</span>
@@ -624,7 +661,7 @@ export default function LiveFaceVerify() {
 
               {/* Multiple Faces Detected Alert */}
               {showMultipleFacesAlert && (
-                <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4 text-left">
+                <div className="mt-4 bg-blue-50/80 backdrop-blur-sm border border-blue-200 rounded-xl p-4 text-left">
                   <div className="flex items-start gap-3">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -654,7 +691,7 @@ export default function LiveFaceVerify() {
             </div>
 
             {/* Session Status */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-5">
+            <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg border border-white/50 p-5">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Session Status</h3>
               <div className="space-y-3">
                 <div className="flex justify-between items-center py-2 border-b border-gray-100">
@@ -681,14 +718,14 @@ export default function LiveFaceVerify() {
             </div>
 
             {/* Detected Person */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-5">
+            <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg border border-white/50 p-5">
               <div className="flex items-center gap-2 mb-4">
-                <Users className="w-5 h-5 text-green-600" />
+                <Users className="w-5 h-5 text-[#ea7c3b]" />
                 <h3 className="text-lg font-semibold text-gray-900">Detected Person</h3>
               </div>
 
               {result?.status === "Identified" ? (
-                <div className="bg-green-50 rounded-lg p-4 border border-green-200 flex flex-col items-start justify-center space-y-1">
+                <div className="bg-green-50/80 backdrop-blur-sm rounded-xl p-4 border border-green-200 flex flex-col items-start justify-center space-y-1">
                   <p className="font-semibold text-gray-900">{result.name || "Unknown"}</p>
                   <p className="text-xs text-gray-600">Role: Employee</p>
                   <p className="text-xs text-gray-500">
@@ -701,13 +738,13 @@ export default function LiveFaceVerify() {
                   </p>
                 </div>
               ) : authError ? (
-                <div className="bg-yellow-50 rounded-lg p-4 border border-yellow-200">
+                <div className="bg-yellow-50/80 backdrop-blur-sm rounded-xl p-4 border border-yellow-200">
                   <p className="text-sm text-yellow-600 text-center py-2">
                     Authentication Required
                   </p>
                 </div>
               ) : (
-                <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                <div className="bg-gray-50/80 backdrop-blur-sm rounded-xl p-4 border border-gray-200">
                   <p className="text-sm text-gray-500 text-center py-6">
                     No employee marked present
                   </p>

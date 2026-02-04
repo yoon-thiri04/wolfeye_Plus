@@ -20,7 +20,7 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const res = await axios.get("http://localhost:8000/detect/ppe_stats");
+        const res = await axios.get("/api/detect/ppe_stats");
         const data = res.data;
 
         setStats(data.ppe_stats || data);
@@ -45,11 +45,11 @@ export default function Dashboard() {
   if (loading) return <p className="p-6">Loading dashboard...</p>;
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
-      <h2 className="text-2xl font-bold mb-4">PPE Dashboard</h2>
+    <div className="p-4 sm:p-6 bg-gray-50 min-h-screen">
+      <h2 className="text-xl sm:text-2xl font-bold mb-4">PPE Dashboard</h2>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <div className="p-4 bg-white shadow rounded">
           <h3 className="text-lg font-semibold">Total Employees</h3>
           <p className="text-2xl font-bold">{totalEmployees}</p>

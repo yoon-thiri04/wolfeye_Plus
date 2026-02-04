@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { Eye, EyeOff, LogIn, User, Shield, Clock, Award, Bug } from "lucide-react";
+import { useNavigate, Link } from "react-router-dom";
+import { Eye, EyeOff, LogIn, User, Shield, Clock, Award, Bug, ArrowRight, Users, Building, Briefcase } from "lucide-react";
 import axios from "axios";
+import gradientBg from "../assets/images/home-gradient-effect.png";
+import logo from "../assets/images/Logo-Elitebuilders.png";
 
 const EmployeeLogin = () => {
   const [formData, setFormData] = useState({
@@ -41,26 +43,30 @@ const EmployeeLogin = () => {
     console.log("Attempting employee login with:", formData.email);
     setDebugInfo(`Attempting login for: ${formData.email}`);
 
-    const response = await axios.post("http://localhost:8000/login", {
+    const response = await axios.post("/api/login", {
       email: formData.email,
-      password: formData.password
+      password: formData.password,
+      role: "employee"
     });
 
     console.log("Login response:", response.data);
-    setDebugInfo(`Login successful! Role: ${response.data.user?.role}`);
+    const employeeData = response.data.employee || response.data.user;
+    const role = employeeData?.role || response.data.user_type;
+    setDebugInfo(`Login successful! Role: ${role}`);
 
     // Check if the logged-in user has employee role
-    if (response.data.user?.role !== "employee") {
+    if (role !== "employee") {
       const errorMsg = "This account is not an employee account. Please use the company login.";
       setError(errorMsg);
-      setDebugInfo(`Wrong user role: ${response.data.user?.role}`);
+      setDebugInfo(`Wrong user role: ${role}`);
       return;
     }
 
     // Handle employee data
     const responseData = response.data;
     const token = responseData.token;
-    const userData = responseData.user;
+    // Ensure role is present in user data
+    const userData = { ...employeeData, role: "employee" };
 
     if (!token || !userData) {
       throw new Error("Invalid response from server");
@@ -128,66 +134,43 @@ const EmployeeLogin = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white flex items-center justify-center p-4">
-      <div className="max-w-4xl w-full grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Left Side - Login Form */}
-        <div className="bg-white rounded-2xl shadow-xl p-8 lg:p-12">
-          <div className="text-center mb-8">
-            <div className="w-16 h-16 bg-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
-              <User className="w-8 h-8 text-white" />
-            </div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Employee Portal</h1>
-            <p className="text-gray-600">Sign in to access your dashboard</p>
+    <div className="relative min-h-screen flex items-center justify-center p-4 overflow-hidden">
+      {/* Background Gradient */}
+      <img
+        src={gradientBg}
+        alt="Background"
+        className="absolute inset-0 w-full h-full object-cover z-0"
+      />
+      
+      <div className="relative z-10 w-full max-w-md bg-white/70 backdrop-blur-2xl rounded-[2.5rem] shadow-[0_8px_32px_0_rgba(31,38,135,0.07)] p-8 md:p-10 border border-white/50">
+        <div className="text-center mb-8">
+          <Link to="/" className="inline-block mb-6">
+             <img src={logo} alt="WolfEye+" className="h-8 md:h-10 mx-auto" />
+          </Link>
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2" style={{ fontFamily: "Plus Jakarta Sans" }}>
+            Employee Portal
+          </h1>
+          <p className="text-gray-500 text-sm md:text-base">Sign in to access your dashboard</p>
+        </div>
+
+        {error && (
+          <div className="mb-6 p-4 bg-red-50/80 border border-red-100 rounded-xl flex items-start gap-3">
+             <div className="bg-red-100 p-1 rounded-full text-red-600 shrink-0 mt-0.5">
+               <Shield size={14} />
+             </div>
+             <p className="text-red-600 text-sm">{error}</p>
           </div>
+        )}
 
-          {/* Debug Info */}
-          {debugInfo && (
-            <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-              <div className="flex items-center gap-2 mb-1">
-                <Bug className="w-4 h-4 text-blue-600" />
-                <span className="text-sm font-medium text-blue-900">Debug Info:</span>
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider ml-1">
+              Work Email
+            </label>
+            <div className="relative group">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <User className="h-5 w-5 text-gray-400 group-focus-within:text-orange-500 transition-colors" />
               </div>
-              <p className="text-xs text-blue-700 font-mono">{debugInfo}</p>
-            </div>
-          )}
-
-          {/* Development Helper */}
-          <div className="mb-4 space-y-2">
-            <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-              <p className="text-yellow-800 text-sm text-center mb-2">
-                Development Tools
-              </p>
-              <div className="flex gap-2 justify-center">
-                <button
-                  type="button"
-                  onClick={() => useTestCredentials("employee")}
-                  className="text-xs bg-yellow-500 text-white px-2 py-1 rounded hover:bg-yellow-600 transition-colors"
-                >
-                  Employee Test Creds
-                </button>
-                <button
-                  type="button"
-                  onClick={() => useTestCredentials("other")}
-                  className="text-xs bg-gray-500 text-white px-2 py-1 rounded hover:bg-gray-600 transition-colors"
-                >
-                  Other Test Creds
-                </button>
-                <button
-                  type="button"
-                  onClick={checkEmployeeExists}
-                  className="text-xs bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600 transition-colors"
-                >
-                  Check Employee
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                Work Email
-              </label>
               <input
                 id="email"
                 name="email"
@@ -195,156 +178,78 @@ const EmployeeLogin = () => {
                 required
                 value={formData.email}
                 onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-colors"
+                className="block w-full pl-11 pr-4 py-3.5 bg-white/50 border border-gray-200 rounded-2xl text-gray-900 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all shadow-sm hover:bg-white/80 text-base"
                 placeholder="employee@company.com"
               />
             </div>
+          </div>
 
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-                Password
-              </label>
-              <div className="relative">
-                <input
-                  id="password"
-                  name="password"
-                  type={showPassword ? "text" : "password"}
-                  required
-                  value={formData.password}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-colors pr-12"
-                  placeholder="Enter your password"
-                />
-                <button
-                  type="button"
-                  onClick={togglePasswordVisibility}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                </button>
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider ml-1">
+              Password
+            </label>
+            <div className="relative group">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <Shield className="h-5 w-5 text-gray-400 group-focus-within:text-orange-500 transition-colors" />
               </div>
-              <p className="text-xs text-gray-500 mt-1">
-                Use the temporary password provided by your company
-              </p>
+              <input
+                id="password"
+                name="password"
+                type={showPassword ? "text" : "password"}
+                required
+                value={formData.password}
+                onChange={handleChange}
+                className="block w-full pl-11 pr-12 py-3.5 bg-white/50 border border-gray-200 rounded-2xl text-gray-900 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all shadow-sm hover:bg-white/80 text-base"
+                placeholder="••••••••"
+              />
+              <button
+                type="button"
+                onClick={togglePasswordVisibility}
+                className="absolute inset-y-0 right-0 pr-4 flex items-center"
+              >
+                {showPassword ? (
+                  <EyeOff className="h-5 w-5 text-gray-400 hover:text-gray-600 transition-colors" />
+                ) : (
+                  <Eye className="h-5 w-5 text-gray-400 hover:text-gray-600 transition-colors" />
+                )}
+              </button>
             </div>
+          </div>
 
-            {error && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-sm font-medium text-red-800">Login Failed</span>
-                </div>
-                <p className="text-sm text-red-700">{error}</p>
-                <p className="text-xs text-red-600 mt-2">
-                  Make sure the employee exists and the password is correct.
-                </p>
-              </div>
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full flex justify-center items-center py-4 px-4 border border-transparent rounded-2xl shadow-lg text-sm font-bold text-white bg-gray-900 hover:bg-black focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-all transform hover:-translate-y-0.5"
+          >
+            {loading ? (
+              <span className="flex items-center gap-2">
+                <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Signing in...
+              </span>
+            ) : (
+              <span className="flex items-center gap-2">
+                Sign In to Dashboard <ArrowRight size={18} />
+              </span>
             )}
+          </button>
+        </form>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className={`w-full py-3 px-4 rounded-lg font-semibold text-white flex items-center justify-center gap-2 transition-colors ${
-                loading
-                  ? "bg-green-400 cursor-not-allowed"
-                  : "bg-green-600 hover:bg-green-700"
-              }`}
-            >
-              {loading ? (
-                <>
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  Signing in...
-                </>
-              ) : (
-                <>
-                  <LogIn className="w-5 h-5" />
-                  Sign In to Employee Portal
-                </>
-              )}
-            </button>
-          </form>
-
-          <div className="mt-8 pt-6 border-t border-gray-200">
-            <div className="bg-green-50 rounded-lg p-4">
-              <h3 className="text-sm font-semibold text-green-900 mb-2">Troubleshooting</h3>
-              <ul className="text-xs text-green-700 space-y-1">
-                <li>• Make sure you're using your company email</li>
-                <li>• Use the temporary password provided by your company</li>
-                <li>• Contact administrator if account doesn't exist</li>
-              </ul>
-            </div>
-          </div>
-        </div>
-
-        {/* Right Side - Info */}
-        <div className="flex flex-col justify-center">
-          <div className="text-center lg:text-left">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              Employee Dashboard
-            </h2>
-            <p className="text-lg text-gray-600 mb-8">
-              Track your attendance, safety compliance, and performance metrics.
-            </p>
-          </div>
-
-          <div className="space-y-6">
-            <div className="bg-white rounded-xl shadow-sm p-6 border border-green-100">
-              <div className="flex items-center gap-4 mb-4">
-                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                  <Clock className="w-6 h-6 text-green-600" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-gray-900">Attendance Tracking</h3>
-                  <p className="text-sm text-gray-600">View your daily attendance records</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-xl shadow-sm p-6 border border-blue-100">
-              <div className="flex items-center gap-4 mb-4">
-                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <Shield className="w-6 h-6 text-blue-600" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-gray-900">Safety Compliance</h3>
-                  <p className="text-sm text-gray-600">Monitor your PPE compliance scores</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-xl shadow-sm p-6 border border-purple-100">
-              <div className="flex items-center gap-4 mb-4">
-                <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                  <Award className="w-6 h-6 text-purple-600" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-gray-900">Performance Points</h3>
-                  <p className="text-sm text-gray-600">Track your safety performance</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-8 bg-green-50 rounded-xl p-6 border border-green-100">
-            <h3 className="font-semibold text-green-900 mb-3">Common Login Issues</h3>
-            <ul className="space-y-2 text-sm text-green-800">
-              <li className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                Employee not created in system
-              </li>
-              <li className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                Incorrect temporary password
-              </li>
-              <li className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                Password not properly hashed
-              </li>
-              <li className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                Account not activated
-              </li>
-            </ul>
-          </div>
+        <div className="mt-10 pt-6 border-t border-gray-200/50">
+           <div className="flex flex-col gap-3 text-center">
+             <p className="text-sm text-gray-500">Other login options:</p>
+             <div className="flex justify-center gap-4 text-sm font-medium">
+               <Link to="/company/login" className="text-gray-600 hover:text-orange-600 transition-colors flex items-center gap-1.5">
+                 <Briefcase className="w-4 h-4" /> Company
+               </Link>
+               <span className="text-gray-300">|</span>
+               <Link to="/admin/login" className="text-gray-600 hover:text-orange-600 transition-colors flex items-center gap-1.5">
+                 <Shield size={16} /> Admin
+               </Link>
+             </div>
+           </div>
         </div>
       </div>
     </div>

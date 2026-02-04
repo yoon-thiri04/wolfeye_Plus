@@ -1,5 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
-import "./App.css";
+import { BrowserRouter as Router, Routes, Route, Link, Navigate } from "react-router-dom";
 import AddEmployee from "./components/AddEmployee.jsx";
 import FaceRecognitionWebcamPage from "./components/FaceRecognitionWebPage.jsx";
 import PPEDetection from "./components/PPEDetection.jsx";
@@ -38,6 +37,61 @@ const Home = () => (
     </>
 )
 
+const decodeToken = (token) => {
+  try {
+    return JSON.parse(atob(token.split(".")[1]));
+  } catch (err) {
+    return null;
+  }
+};
+
+const getTokenForRole = (role) => {
+  if (role === "admin") return localStorage.getItem("admin_token");
+  if (role === "employee") return localStorage.getItem("employee_token");
+  return localStorage.getItem("company_token") || localStorage.getItem("face_verification_company_token");
+};
+
+const getStoredRole = (role) => {
+  const key =
+    role === "admin"
+      ? "admin_user"
+      : role === "employee"
+      ? "employee_data"
+      : "company_user";
+  const raw = localStorage.getItem(key);
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw)?.role || null;
+  } catch (err) {
+    return null;
+  }
+};
+
+const loginPathForRole = (role) => {
+  if (role === "admin") return "/admin/login";
+  if (role === "employee") return "/employee/login";
+  return "/company/login";
+};
+
+const ProtectedRoute = ({ role, children }) => {
+  const token = getTokenForRole(role);
+  if (!token) return <Navigate to={loginPathForRole(role)} replace />;
+  
+  const decoded = decodeToken(token);
+  if (!decoded) {
+    // Invalid token, redirect to login
+    return <Navigate to={loginPathForRole(role)} replace />;
+  }
+
+  const tokenRole = decoded.role;
+  const storedRole = getStoredRole(role);
+  
+  if (tokenRole && tokenRole !== role) return <Navigate to={loginPathForRole(role)} replace />;
+  if (!tokenRole && storedRole && storedRole !== role) return <Navigate to={loginPathForRole(role)} replace />;
+  
+  return children;
+};
+
 function App() {
   return (
     <Router>
@@ -45,19 +99,19 @@ function App() {
           <Route path="/landing" element={<LandingPage />} />
           <Route path="/employee" element={<EmployeePage />} />
         <Route path="/" element={<Home />} />
-        <Route path="/add" element={<AddEmployee />} />
-        <Route path="/facewebcam" element={<FaceRecognitionWebcamPage />} />
-          <Route path="/ppe-detect" element={<PPEDetection />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/summary" element={<Summary />} />
+        <Route path="/add" element={<ProtectedRoute role="company"><AddEmployee /></ProtectedRoute>} />
+        <Route path="/facewebcam" element={<ProtectedRoute role="company"><FaceRecognitionWebcamPage /></ProtectedRoute>} />
+          <Route path="/ppe-detect" element={<ProtectedRoute role="company"><PPEDetection /></ProtectedRoute>} />
+          <Route path="/dashboard" element={<ProtectedRoute role="company"><Dashboard /></ProtectedRoute>} />
+          <Route path="/summary" element={<ProtectedRoute role="company"><Summary /></ProtectedRoute>} />
           <Route path="/admin/login" element={<AdminLogin />} />
-          <Route path="/admin/dashboard" element={<AdminDashboard />} />
+          <Route path="/admin/dashboard" element={<ProtectedRoute role="admin"><AdminDashboard /></ProtectedRoute>} />
           <Route path="/company/login" element={<CompanyLogin />} />
-          <Route path="/company/dashboard" element={<CompanyDashboard />} />
-          <Route path="/employee/reward" element={<EmployeeReward />} />
-          <Route path="/company/setting" element={<Setting />} />
-          <Route path="/employee/dashboard" element={<EmployeeDashboard />} />
-          <Route path="/employee/homepage" element={<EmployeeHomepage />} />
+          <Route path="/company/dashboard" element={<ProtectedRoute role="company"><CompanyDashboard /></ProtectedRoute>} />
+          <Route path="/employee/reward" element={<ProtectedRoute role="employee"><EmployeeReward /></ProtectedRoute>} />
+          <Route path="/company/setting" element={<ProtectedRoute role="company"><Setting /></ProtectedRoute>} />
+          <Route path="/employee/dashboard" element={<ProtectedRoute role="employee"><EmployeeDashboard /></ProtectedRoute>} />
+          <Route path="/employee/homepage" element={<ProtectedRoute role="employee"><EmployeeHomepage /></ProtectedRoute>} />
           <Route path="/employee/login" element={<EmployeeLogin />} />
       </Routes>
     </Router>

@@ -1,0 +1,56 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches: [ "staging" ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT || 22 }}
+          command_timeout: 30m
+          script: |
+            # 1. Navigate to project directory
+            TARGET_DIR="/opt/wolfeye_Plus"
+            if [ -d "$TARGET_DIR" ]; then
+              cd "$TARGET_DIR"
+            else
+              cd ~/wolfeye_Plus
+            fi
+
+            # 2. Security & Malware Cleanup (Safe Mode)
+            echo "Running security cleanup..."
+            
+            # Remove suspicious files from tmp (safely)
+            # We do NOT kill processes here to avoid killing the SSH deployment script itself
+            rm -rf /var/tmp/[0-9]* || true  # Remove files that are just numbers (common malware pattern)
+            find /var/tmp -maxdepth 1 -type f -delete || true # Remove files in root of /var/tmp
+            
+            # 3. Pull latest changes efficiently
+            git fetch origin staging
+            git reset --hard origin/staging
+
+            # 4. Remove Python cache
+            find . -name "__pycache__" -type d -exec rm -rf {} +
+
+            # 5. Smart Deploy (Zero Downtime attempt)
+            # We DO NOT run 'docker compose down' here. 
+            # 'up -d --build' will only recreate changed containers.
+            echo "Starting production containers..."
+            docker compose -f docker-compose.prod.yml up -d --build --remove-orphans
+            
+            # 6. Aggressive Cleanup to save VPS space
+            echo "Cleaning up unused Docker resources..."
+            docker image prune -af  # Remove all unused images, not just dangling ones
+            docker builder prune -f # Clean build cache

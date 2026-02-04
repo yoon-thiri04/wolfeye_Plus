@@ -1,11 +1,15 @@
 motor
-dotenv
+python-dotenv
 pillow
 numpy
 fastapi
 deepface
 pydantic
-multipart
+python-multipart
 uvicorn
 ultralytics
 redis
+passlib
+bcrypt==4.0.1
+python-jose
+tf-keras

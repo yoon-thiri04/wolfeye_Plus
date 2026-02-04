@@ -11,7 +11,6 @@ from backend.models.employee import EmployeeCreate, EmployeeResponse
 from backend.db import db
 import shutil
 import os
-from deepface import DeepFace
 from bson import ObjectId
 from PIL import Image
 from datetime import datetime,date, timedelta
@@ -54,8 +53,23 @@ async def create_employee_api(
         shutil.copyfileobj(image.file, buffer)
 
     print(file_path)
-    raw_result = DeepFace.represent(img_path=file_path)[0]
+    from deepface import DeepFace
+    try:
+        # Enforce detection to ensure high quality registration photos
+        # Explicitly using VGG-Face (4096 dims) to match seeder and other parts
+        raw_result = DeepFace.represent(img_path=file_path, model_name="VGG-Face", enforce_detection=True)[0]
+    except Exception as e:
+        # Clean up file if detection fails
+        if os.path.exists(file_path):
+            os.remove(file_path)
+        print(f"DeepFace Error: {str(e)}")
+        raise HTTPException(
+            status_code=400, 
+            detail="No face detected in the photo. Please use a clear, well-lit photo containing a single face."
+        )
+
     print(raw_result)
+
     embedding_data = format_embedding_result(raw_result)
 
     existing_user = await get_user_by_email(email)
@@ -82,7 +96,7 @@ async def create_employee_api(
     return {"name": employee.name}
 
 
-@employee_router.post("/verify/")
+@employee_router.post("/verify") 
 async def verify_employee(image: UploadFile = File(...), current_user: dict = Depends(company_required)):
     temp_path = os.path.join(FRAME_DIR, image.filename)
     print(temp_path)
@@ -90,7 +104,8 @@ async def verify_employee(image: UploadFile = File(...), current_user: dict = De
         shutil.copyfileobj(image.file, f)
 
     try:
-        raw_results = DeepFace.represent(img_path=temp_path)
+        from deepface import DeepFace
+        raw_results = DeepFace.represent(img_path=temp_path, model_name="VGG-Face")
         if len(raw_results) > 1:
             return {
                 "status": "error",
@@ -114,6 +129,12 @@ async def verify_employee(image: UploadFile = File(...), current_user: dict = De
 
     for emp in employees:
         stored_embedding = np.array(emp["embedding"])
+        
+        # Skip if embedding dimensions don't match (e.g. old data vs new model)
+        if stored_embedding.shape != new_embedding.shape:
+            print(f"Warning: Skipping employee {emp.get('name')} due to embedding mismatch. Stored: {stored_embedding.shape}, New: {new_embedding.shape}")
+            continue
+
         score = cosine_similarity(stored_embedding, new_embedding)
         if score > best_score:
             best_score = score
@@ -189,6 +210,7 @@ async def update_employee(
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(image.file, buffer)
 
+        from deepface import DeepFace
         raw_result = DeepFace.represent(img_path=file_path)[0]
         embedding_data = format_embedding_result(raw_result)
 
@@ -384,12 +406,23 @@ async def dashboard(current_user: dict = Depends(employee_required)):
                 most_missed_item = None
                 best_compliance_item = None
 
+            # Calculate Safety Score
+            total_true = sum(data["true_count"].values())
+            total_violations = data["violations"]
+            total_checks = total_true + total_violations
+
+            if total_checks > 0:
+                safety_score = (total_true / total_checks) * 100
+            else:
+                safety_score = 0
+
             weekly_summary[week] = {
                 "violations": data["violations"],
                 "most_missed_item": most_missed_item,
                 "best_compliance_item": best_compliance_item,
                 "days_count": data["days_count"],
-                "bar_chart_data": dict(data["missed_items_count"])  # Convert defaultdict to dict
+                "bar_chart_data": dict(data["missed_items_count"]),  # Convert defaultdict to dict
+                "safety_score": round(safety_score, 1)
             }
 
         # Create response data and serialize it properly

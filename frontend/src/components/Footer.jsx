@@ -27,24 +27,24 @@ const Footer = () => {
 
         {/* Links */}
         <div className="flex flex-col md:items-center gap-4 mt-8 md:mt-0">
-          <div className="flex flex-wrap justify-center gap-10 text-white font-medium text-sm">
-            <a href="#" className="hover:underline transition">
+          <div className="flex flex-wrap justify-center gap-6 md:gap-10 text-white font-medium text-sm">
+            <a href="#" className="hover:text-orange-400 transition-colors duration-300">
               About
             </a>
-            <a href="#" className="hover:underline transition">
+            <a href="#" className="hover:text-orange-400 transition-colors duration-300">
               Services
             </a>
-            <a href="#" className="hover:underline transition">
+            <a href="#" className="hover:text-orange-400 transition-colors duration-300">
               Projects
             </a>
-            <a href="#" className="hover:underline transition">
+            <a href="#" className="hover:text-orange-400 transition-colors duration-300">
               Tools & resources
             </a>
-            <a href="#" className="hover:underline transition">
+            <a href="#" className="hover:text-orange-400 transition-colors duration-300">
               Contact
             </a>
           </div>
-          <p className="text-xs text-white mt-2">
+          <p className="text-xs text-gray-400 mt-2 text-center">
             Copyright © 2024 WolfEye+ Inc. | All Rights Reserved
           </p>
         </div>
@@ -53,21 +53,21 @@ const Footer = () => {
         <div className="flex gap-3 mt-8 md:mt-0">
           <a
             href="#"
-            className="p-2 bg-white border border-gray-300 rounded-md hover:bg-gray-100 transition"
+            className="p-2 bg-white/10 border border-white/20 rounded-lg hover:bg-orange-500 hover:border-orange-500 transition-all duration-300 group"
           >
-            <Youtube size={16} className="text-black" />
+            <Youtube size={18} className="text-white group-hover:text-white" />
           </a>
           <a
             href="#"
-            className="p-2 bg-white border border-gray-300 rounded-md hover:bg-gray-100 transition"
+            className="p-2 bg-white/10 border border-white/20 rounded-lg hover:bg-orange-500 hover:border-orange-500 transition-all duration-300 group"
           >
-            <Instagram size={16} className="text-black" />
+            <Instagram size={18} className="text-white group-hover:text-white" />
           </a>
           <a
             href="#"
-            className="p-2 bg-white border border-gray-300 rounded-md hover:bg-gray-100 transition"
+            className="p-2 bg-white/10 border border-white/20 rounded-lg hover:bg-orange-500 hover:border-orange-500 transition-all duration-300 group"
           >
-            <Twitter size={16} className="text-black" />
+            <Twitter size={18} className="text-white group-hover:text-white" />
           </a>
         </div>
       </motion.footer>

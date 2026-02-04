@@ -82,7 +82,7 @@ const CompanyDashboard = () => {
 
       console.log("Fetching dashboard data with token:", token ? "Token present" : "No token");
 
-      const response = await axios.get("http://localhost:8000/company/dashboard", {
+      const response = await axios.get("/api/company/dashboard", {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json"
@@ -124,7 +124,7 @@ const CompanyDashboard = () => {
     setMonthlyLoading(true);
     const token = localStorage.getItem("company_token") || localStorage.getItem("face_verification_company_token");
 
-    const response = await axios.get("http://localhost:8000/company/monthly_dashboard", {
+    const response = await axios.get("/api/company/monthly_dashboard", {
       headers: {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json"
@@ -164,7 +164,7 @@ const safetyComparisonMonth = monthlyData?.safety_comparison || [];
       setWeeklyLoading(true);
       const token = localStorage.getItem("company_token") || localStorage.getItem("face_verification_company_token");
 
-      const response = await axios.get("http://localhost:8000/company/weekly_dashboard", {
+      const response = await axios.get("/api/company/weekly_dashboard", {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json"
@@ -269,155 +269,140 @@ const safetyComparisonMonth = monthlyData?.safety_comparison || [];
   const safetyComparison = weeklyData?.safety_comparison || [];
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-white">
       <Navbar />
 
-      <div className="max-w-7xl mx-auto px-8 py-8">
-        <div className="flex items-center justify-between mb-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 mb-8">
           <div className="text-left">
-            <h1 className="text-3xl font-bold text-gray-900 mb-1">Employee Dashboard</h1>
-            <p className="text-gray-500 text-sm">Real-time AI-powered construction safety monitoring</p>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Company Dashboard</h1>
+            <p className="text-gray-600">Real-time AI-powered construction safety monitoring</p>
           </div>
-          <div className="flex items-center gap-2 bg-white rounded-full p-1 shadow-sm border border-gray-200">
-            <button
-              onClick={() => setSelectedPeriod("Daily")}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                selectedPeriod === "Daily"
-                  ? "bg-green-500 text-white"
-                  : "text-gray-600 hover:text-gray-900"
-              }`}
-            >
-              Daily
-            </button>
-            <button
-              onClick={() => setSelectedPeriod("Weekly")}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                selectedPeriod === "Weekly"
-                  ? "bg-green-500 text-white"
-                  : "text-gray-600 hover:text-gray-900"
-              }`}
-            >
-              Weekly
-            </button>
-            <button
-              onClick={() => setSelectedPeriod("Monthly")}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                selectedPeriod === "Monthly"
-                  ? "bg-green-500 text-white"
-                  : "text-gray-600 hover:text-gray-900"
-              }`}
-            >
-              Monthly
-            </button>
+          <div className="flex items-center gap-1 bg-white/50 backdrop-blur-md rounded-full p-1.5 shadow-sm border border-white/20">
+            {["Daily", "Weekly", "Monthly"].map((period) => (
+              <button
+                key={period}
+                onClick={() => setSelectedPeriod(period)}
+                className={`px-6 py-2.5 rounded-full text-sm font-medium transition-all duration-200 ${
+                  selectedPeriod === period
+                    ? "bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-md shadow-orange-200"
+                    : "text-gray-600 hover:bg-white/50 hover:text-gray-900"
+                }`}
+              >
+                {period}
+              </button>
+            ))}
           </div>
         </div>
 
         {selectedPeriod === "Daily" ? (
           /* Daily view  */
           <>
-            <div className="grid grid-cols-4 gap-6 mb-8 text-left">
-              <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-6 shadow-sm border border-green-200">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-sm text-gray-600">Attendance Rate Today</span>
-                  <div className="w-10 h-10 bg-green-200 rounded-lg flex items-center justify-center">
-                    <Calendar className="w-5 h-5 text-green-700" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 text-left">
+              <div className="bg-white/70 backdrop-blur-xl rounded-[2rem] p-6 shadow-xl shadow-orange-100/20 border border-white/40 group hover:scale-[1.02] transition-transform duration-300">
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-sm font-medium text-gray-600">Attendance Rate</span>
+                  <div className="w-12 h-12 bg-green-100 rounded-2xl flex items-center justify-center group-hover:bg-green-200 transition-colors">
+                    <Calendar className="w-6 h-6 text-green-600" />
                   </div>
                 </div>
-                <div className="mb-2">
+                <div className="mb-3">
                   <div className="text-3xl font-bold text-gray-900">{average_attendance_rate}%</div>
-                  <div className="text-xs text-green-600 font-medium">-3% vs yesterday</div>
+                  <div className="flex items-center gap-1 text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full w-fit mt-2">
+                    <TrendingUp className="w-3 h-3" />
+                    <span>Today's status</span>
+                  </div>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-gray-500">Performance</span>
-                  <span className="text-xs font-semibold text-green-700">{average_attendance_rate}%</span>
-                </div>
-                <div className="mt-2 w-full bg-green-200 rounded-full h-1.5">
+                <div className="mt-4 w-full bg-gray-100 rounded-full h-2 overflow-hidden">
                   <div
-                    className="bg-green-600 h-1.5 rounded-full transition-all"
+                    className="bg-gradient-to-r from-green-500 to-green-400 h-full rounded-full transition-all duration-1000 ease-out"
                     style={{ width: `${average_attendance_rate}%` }}
                   ></div>
                 </div>
               </div>
 
-              <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 shadow-sm border border-blue-200">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-sm text-gray-600">Average Safety Compliance</span>
-                  <div className="w-10 h-10 bg-blue-200 rounded-lg flex items-center justify-center">
-                    <Shield className="w-5 h-5 text-blue-700" />
+              <div className="bg-white/70 backdrop-blur-xl rounded-[2rem] p-6 shadow-xl shadow-orange-100/20 border border-white/40 group hover:scale-[1.02] transition-transform duration-300">
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-sm font-medium text-gray-600">Safety Compliance</span>
+                  <div className="w-12 h-12 bg-blue-100 rounded-2xl flex items-center justify-center group-hover:bg-blue-200 transition-colors">
+                    <Shield className="w-6 h-6 text-blue-600" />
                   </div>
                 </div>
-                <div className="mb-2">
+                <div className="mb-3">
                   <div className="text-3xl font-bold text-gray-900">{average_safety_rate}%</div>
+                  <div className="flex items-center gap-1 text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-full w-fit mt-2">
+                    <Shield className="w-3 h-3" />
+                    <span>Average score</span>
+                  </div>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-gray-500">Performance</span>
-                  <span className="text-xs font-semibold text-blue-700">{average_safety_rate}%</span>
-                </div>
-                <div className="mt-2 w-full bg-blue-200 rounded-full h-1.5">
+                <div className="mt-4 w-full bg-gray-100 rounded-full h-2 overflow-hidden">
                   <div
-                    className="bg-blue-600 h-1.5 rounded-full transition-all"
+                    className="bg-gradient-to-r from-blue-500 to-blue-400 h-full rounded-full transition-all duration-1000 ease-out"
                     style={{ width: `${average_safety_rate}%` }}
                   ></div>
                 </div>
               </div>
 
-              <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-6 shadow-sm border border-purple-200">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-sm text-gray-600">Total Employees</span>
-                  <div className="w-10 h-10 bg-purple-200 rounded-lg flex items-center justify-center">
-                    <Users className="w-5 h-5 text-purple-700" />
+              <div className="bg-white/70 backdrop-blur-xl rounded-[2rem] p-6 shadow-xl shadow-orange-100/20 border border-white/40 group hover:scale-[1.02] transition-transform duration-300">
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-sm font-medium text-gray-600">Total Employees</span>
+                  <div className="w-12 h-12 bg-purple-100 rounded-2xl flex items-center justify-center group-hover:bg-purple-200 transition-colors">
+                    <Users className="w-6 h-6 text-purple-600" />
                   </div>
                 </div>
-                <div className="mb-2">
+                <div className="mb-3">
                   <div className="text-3xl font-bold text-gray-900">{total_employees}</div>
+                  <div className="flex items-center gap-1 text-xs font-medium text-purple-600 bg-purple-50 px-2 py-1 rounded-full w-fit mt-2">
+                    <Users className="w-3 h-3" />
+                    <span>Active staff</span>
+                  </div>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-gray-500">Performance</span>
-                  <span className="text-xs font-semibold text-purple-700">100%</span>
-                </div>
-                <div className="mt-2 w-full bg-purple-200 rounded-full h-1.5">
-                  <div className="bg-purple-600 h-1.5 rounded-full transition-all" style={{ width: "100%" }}></div>
+                <div className="mt-4 w-full bg-gray-100 rounded-full h-2 overflow-hidden">
+                  <div className="bg-gradient-to-r from-purple-500 to-purple-400 h-full rounded-full transition-all duration-1000 ease-out" style={{ width: "100%" }}></div>
                 </div>
               </div>
 
-              <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl p-6 shadow-sm border border-orange-200">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-sm text-gray-600">Absent Employees</span>
-                  <div className="w-10 h-10 bg-orange-200 rounded-lg flex items-center justify-center">
-                    <AlertTriangle className="w-5 h-5 text-orange-700" />
+              <div className="bg-white/70 backdrop-blur-xl rounded-[2rem] p-6 shadow-xl shadow-orange-100/20 border border-white/40 group hover:scale-[1.02] transition-transform duration-300">
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-sm font-medium text-gray-600">Absent Today</span>
+                  <div className="w-12 h-12 bg-orange-100 rounded-2xl flex items-center justify-center group-hover:bg-orange-200 transition-colors">
+                    <AlertTriangle className="w-6 h-6 text-orange-600" />
                   </div>
                 </div>
-                <div className="mb-2">
+                <div className="mb-3">
                   <div className="text-3xl font-bold text-gray-900">{absentCount}</div>
+                  <div className="flex items-center gap-1 text-xs font-medium text-orange-600 bg-orange-50 px-2 py-1 rounded-full w-fit mt-2">
+                    <AlertTriangle className="w-3 h-3" />
+                    <span>Needs attention</span>
+                  </div>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-gray-500">Performance</span>
-                  <span className="text-xs font-semibold text-orange-700">{absentCount > 0 ? Math.round((absentCount / total_employees) * 100) : 0}%</span>
-                </div>
-                <div className="mt-2 w-full bg-orange-200 rounded-full h-1.5">
+                <div className="mt-4 w-full bg-gray-100 rounded-full h-2 overflow-hidden">
                   <div
-                    className="bg-orange-600 h-1.5 rounded-full transition-all"
+                    className="bg-gradient-to-r from-orange-500 to-orange-400 h-full rounded-full transition-all duration-1000 ease-out"
                     style={{ width: `${absentCount > 0 ? Math.round((absentCount / total_employees) * 100) : 0}%` }}
                   ></div>
                 </div>
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-6 text-left">
-              <div className="col-span-2 space-y-6">
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                  <h2 className="text-lg font-semibold text-gray-900 mb-6">Employee Attendance</h2>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 text-left">
+              <div className="lg:col-span-2 space-y-6">
+                <div className="bg-white/70 backdrop-blur-xl rounded-[2rem] shadow-xl shadow-orange-100/20 border border-white/40 p-6">
+                  <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                    <Users className="w-5 h-5 text-orange-500" />
+                    Employee Attendance
+                  </h2>
                   <div className="space-y-3">
   {attendance_today && attendance_today.length > 0 ? (
     <>
       {attendance_today.slice(0, showAll ? attendance_today.length : 3).map((employee, index) => (
-        <div key={index} className="flex items-center justify-between p-4 rounded-lg hover:bg-gray-50 transition-colors bg-gray-50">
+        <div key={index} className="flex items-center justify-between p-4 rounded-xl hover:bg-orange-50/50 transition-colors bg-white/50 border border-gray-100">
           <div className="flex items-center gap-4">
-            <div className="w-10 h-10 rounded-full bg-green-200 flex items-center justify-center text-green-500 font-semibold text-sm">
+            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-orange-100 to-orange-200 flex items-center justify-center text-orange-600 font-bold text-sm shadow-sm">
               {employee.name.split(' ').map(n => n[0]).join('').toUpperCase()}
             </div>
             <div>
-              <div className="font-medium text-gray-900">{employee.name}</div>
+              <div className="font-semibold text-gray-900">{employee.name}</div>
               <div className="text-sm text-gray-500">Roll: {employee.employee_id}</div>
             </div>
           </div>
@@ -438,7 +423,7 @@ const safetyComparisonMonth = monthlyData?.safety_comparison || [];
         <div className="text-center pt-2">
           <button
             onClick={() => setShowAll(!showAll)}
-            className="px-4 py-2 text-blue-600 hover:text-blue-800 text-sm font-medium border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors"
+            className="px-6 py-2 text-orange-600 hover:text-orange-700 text-sm font-medium border border-orange-200 rounded-full hover:bg-orange-50 transition-colors"
           >
             {showAll ? 'Show Less' : `View All ${attendance_today.length} Employees`}
           </button>
@@ -451,9 +436,12 @@ const safetyComparisonMonth = monthlyData?.safety_comparison || [];
 </div>
                 </div>
 
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <div className="bg-white/70 backdrop-blur-xl rounded-[2rem] shadow-xl shadow-orange-100/20 border border-white/40 p-6">
                   <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-lg font-semibold text-gray-900">PPE Compliance Distribution</h2>
+                    <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                      <Shield className="w-5 h-5 text-orange-500" />
+                      PPE Compliance Distribution
+                    </h2>
                     <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
                       {compliance_distribution?.fully?.percent || 0}% Compliant
                     </span>
@@ -508,30 +496,30 @@ const safetyComparisonMonth = monthlyData?.safety_comparison || [];
                   </div>
 
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                        <span className="text-sm text-gray-700">Fully Compliant</span>
+                    <div className="flex items-center justify-between p-3 rounded-lg bg-white/50 border border-gray-100">
+                      <div className="flex items-center gap-3">
+                        <div className="w-3 h-3 bg-green-500 rounded-full shadow-sm shadow-green-200"></div>
+                        <span className="text-sm font-medium text-gray-700">Fully Compliant</span>
                       </div>
-                      <span className="text-sm font-medium text-gray-900">
+                      <span className="text-sm font-bold text-gray-900">
                         {compliance_distribution?.fully?.count || 0} ({compliance_distribution?.fully?.percent || 0}%)
                       </span>
                     </div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
-                        <span className="text-sm text-gray-700">Partially Compliant</span>
+                    <div className="flex items-center justify-between p-3 rounded-lg bg-white/50 border border-gray-100">
+                      <div className="flex items-center gap-3">
+                        <div className="w-3 h-3 bg-yellow-500 rounded-full shadow-sm shadow-yellow-200"></div>
+                        <span className="text-sm font-medium text-gray-700">Partially Compliant</span>
                       </div>
-                      <span className="text-sm font-medium text-gray-900">
+                      <span className="text-sm font-bold text-gray-900">
                         {compliance_distribution?.partially?.count || 0} ({compliance_distribution?.partially?.percent || 0}%)
                       </span>
                     </div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                        <span className="text-sm text-gray-700">Non-Compliant</span>
+                    <div className="flex items-center justify-between p-3 rounded-lg bg-white/50 border border-gray-100">
+                      <div className="flex items-center gap-3">
+                        <div className="w-3 h-3 bg-red-500 rounded-full shadow-sm shadow-red-200"></div>
+                        <span className="text-sm font-medium text-gray-700">Non-Compliant</span>
                       </div>
-                      <span className="text-sm font-medium text-gray-900">
+                      <span className="text-sm font-bold text-gray-900">
                         {compliance_distribution?.non?.count || 0} ({compliance_distribution?.non?.percent || 0}%)
                       </span>
                     </div>
@@ -540,40 +528,40 @@ const safetyComparisonMonth = monthlyData?.safety_comparison || [];
               </div>
 
               <div className="space-y-6">
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <div className="bg-white/70 backdrop-blur-xl rounded-[2rem] shadow-xl shadow-orange-100/20 border border-white/40 p-6">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2">
                       <AlertTriangle className="w-5 h-5 text-orange-500" />
-                      <h2 className="text-lg font-semibold text-gray-900">Needs Improvement</h2>
+                      <h2 className="text-xl font-bold text-gray-900">Needs Improvement</h2>
                     </div>
                     <span className="px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs font-medium">
                       {most_non_compliant_employees?.length || 0} Alerts
                     </span>
                   </div>
-                  <p className="text-sm text-gray-500 mb-9">Employees requiring attention & support</p>
+                  <p className="text-sm text-gray-500 mb-6">Employees requiring attention & support</p>
 
                   <div className="space-y-3">
                     {most_non_compliant_employees && most_non_compliant_employees.length > 0 ? (
                       most_non_compliant_employees.slice(0, 1).map((employee, index) => (
-                        <div key={index} className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-                          <div className="flex items-center justify-between mb-3">
+                        <div key={index} className="bg-gradient-to-br from-orange-50 to-white border border-orange-100 rounded-xl p-5 shadow-sm">
+                          <div className="flex items-center justify-between mb-4">
                             <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white font-semibold text-sm">
+                              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white font-bold text-sm shadow-md shadow-orange-200">
                                 {employee.name.split(' ').map(n => n[0]).join('').toUpperCase()}
                               </div>
                               <div>
-                                <div className="font-medium text-gray-900">{employee.name}</div>
+                                <div className="font-semibold text-gray-900">{employee.name}</div>
                                 <div className="text-xs text-gray-500">{employee.employee_id}</div>
                               </div>
                             </div>
                             <div className="text-right">
-                              <div className="text-lg font-bold text-orange-600">{100 - employee.ppe_violation_percent}%</div>
-                              <div className="text-xs text-gray-500">PPE</div>
+                              <div className="text-xl font-bold text-orange-600">{100 - employee.ppe_violation_percent}%</div>
+                              <div className="text-xs text-gray-500">PPE Score</div>
                             </div>
                           </div>
-                          <div className="flex items-center gap-1 text-xs text-gray-600">
-                            <span className="inline-block w-1.5 h-1.5 bg-red-500 rounded-full"></span>
-                            <span>{employee.total_violations} violations</span>
+                          <div className="flex items-center gap-2 text-xs text-gray-600 bg-white/50 p-2 rounded-lg">
+                            <span className="inline-block w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+                            <span className="font-medium">{employee.total_violations} active violations</span>
                           </div>
                         </div>
                       ))
@@ -583,20 +571,23 @@ const safetyComparisonMonth = monthlyData?.safety_comparison || [];
                   </div>
                 </div>
 
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                  <h2 className="text-lg font-semibold text-gray-900 mb-4">PPE Violations Today</h2>
+                <div className="bg-white/70 backdrop-blur-xl rounded-[2rem] shadow-xl shadow-orange-100/20 border border-white/40 p-6">
+                  <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                    <AlertTriangle className="w-5 h-5 text-orange-500" />
+                    PPE Violations Today
+                  </h2>
                   <p className="text-sm text-gray-500 mb-6">Real-time equipment compliance status</p>
 
-                  <div className="space-y-4">
+                  <div className="space-y-5">
                     {ppeViolationsData.map((item, index) => (
                       <div key={index}>
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-sm text-gray-700">{item.name}</span>
-                          <span className="text-sm font-semibold text-gray-900">{item.value}</span>
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-medium text-gray-700">{item.name}</span>
+                          <span className="text-sm font-bold text-gray-900">{item.value}</span>
                         </div>
-                        <div className="relative h-8 bg-gray-100 rounded overflow-hidden">
+                        <div className="relative h-2 bg-gray-100 rounded-full overflow-hidden">
                           <div
-                            className={`absolute inset-y-0 left-0 ${item.color} transition-all rounded`}
+                            className={`absolute inset-y-0 left-0 ${item.color} transition-all duration-1000 ease-out rounded-full`}
                             style={{ width: `${(item.value / maxViolations) * 100}%` }}
                           ></div>
                         </div>
@@ -609,104 +600,104 @@ const safetyComparisonMonth = monthlyData?.safety_comparison || [];
           </>
         ) : selectedPeriod === "Weekly" ? (
           /* Weekly view  */
-<div className="space-y-6">
-  {/* First Row for Summary Cards */}
-  <div className="grid grid-cols-4 gap-6 text-left">
-    <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-6 shadow-sm border border-green-200">
-      <div className="flex items-center justify-between mb-3">
-        <span className="text-sm text-gray-600">Attendance Rate This Week</span>
-        <div className="w-10 h-10 bg-green-200 rounded-lg flex items-center justify-center">
-          <Calendar className="w-5 h-5 text-green-700" />
-        </div>
-      </div>
-      <div className="mb-2">
-        <div className="text-3xl font-bold text-gray-900">{weeklySummary.average_attendance_rate_week || 0}%</div>
-        <div className="text-xs text-green-600 font-medium">+3% vs last week</div>
-      </div>
-      <div className="flex items-center justify-between">
-        <span className="text-xs text-gray-500">Performance</span>
-        <span className="text-xs font-semibold text-green-700">{weeklySummary.average_attendance_rate_week || 0}%</span>
-      </div>
-      <div className="mt-2 w-full bg-green-200 rounded-full h-1.5">
-        <div
-          className="bg-green-600 h-1.5 rounded-full transition-all"
-          style={{ width: `${weeklySummary.average_attendance_rate_week || 0}%` }}
-        ></div>
-      </div>
-    </div>
+          <div className="space-y-8">
+            {/* First Row for Summary Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 text-left">
+              <div className="bg-white/70 backdrop-blur-xl rounded-[2rem] p-6 shadow-xl shadow-orange-100/20 border border-white/40 group hover:scale-[1.02] transition-transform duration-300">
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-sm font-medium text-gray-600">Attendance Rate</span>
+                  <div className="w-12 h-12 bg-green-100 rounded-2xl flex items-center justify-center group-hover:bg-green-200 transition-colors">
+                    <Calendar className="w-6 h-6 text-green-600" />
+                  </div>
+                </div>
+                <div className="mb-3">
+                  <div className="text-3xl font-bold text-gray-900">{weeklySummary.average_attendance_rate_week || 0}%</div>
+                  <div className="flex items-center gap-1 text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full w-fit mt-2">
+                    <TrendingUp className="w-3 h-3" />
+                    <span>+3% vs last week</span>
+                  </div>
+                </div>
+                <div className="mt-4 w-full bg-gray-100 rounded-full h-2 overflow-hidden">
+                  <div
+                    className="bg-gradient-to-r from-green-500 to-green-400 h-full rounded-full transition-all duration-1000 ease-out"
+                    style={{ width: `${weeklySummary.average_attendance_rate_week || 0}%` }}
+                  ></div>
+                </div>
+              </div>
 
-    <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 shadow-sm border border-blue-200">
-      <div className="flex items-center justify-between mb-3">
-        <span className="text-sm text-gray-600">Average Safety Compliance</span>
-        <div className="w-10 h-10 bg-blue-200 rounded-lg flex items-center justify-center">
-          <Shield className="w-5 h-5 text-blue-700" />
-        </div>
-      </div>
-      <div className="mb-2">
-        <div className="text-3xl font-bold text-gray-900">{weeklySummary.average_safety_rate_week || 0}%</div>
-      </div>
-      <div className="flex items-center justify-between">
-        <span className="text-xs text-gray-500">Performance</span>
-        <span className="text-xs font-semibold text-blue-700">{weeklySummary.average_safety_rate_week || 0}%</span>
-      </div>
-      <div className="mt-2 w-full bg-blue-200 rounded-full h-1.5">
-        <div
-          className="bg-blue-600 h-1.5 rounded-full transition-all"
-          style={{ width: `${weeklySummary.average_safety_rate_week || 0}%` }}
-        ></div>
-      </div>
-    </div>
+              <div className="bg-white/70 backdrop-blur-xl rounded-[2rem] p-6 shadow-xl shadow-orange-100/20 border border-white/40 group hover:scale-[1.02] transition-transform duration-300">
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-sm font-medium text-gray-600">Safety Compliance</span>
+                  <div className="w-12 h-12 bg-blue-100 rounded-2xl flex items-center justify-center group-hover:bg-blue-200 transition-colors">
+                    <Shield className="w-6 h-6 text-blue-600" />
+                  </div>
+                </div>
+                <div className="mb-3">
+                  <div className="text-3xl font-bold text-gray-900">{weeklySummary.average_safety_rate_week || 0}%</div>
+                  <div className="flex items-center gap-1 text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-full w-fit mt-2">
+                    <Shield className="w-3 h-3" />
+                    <span>Average score</span>
+                  </div>
+                </div>
+                <div className="mt-4 w-full bg-gray-100 rounded-full h-2 overflow-hidden">
+                  <div
+                    className="bg-gradient-to-r from-blue-500 to-blue-400 h-full rounded-full transition-all duration-1000 ease-out"
+                    style={{ width: `${weeklySummary.average_safety_rate_week || 0}%` }}
+                  ></div>
+                </div>
+              </div>
 
-    <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-6 shadow-sm border border-purple-200">
-      <div className="flex items-center justify-between mb-3">
-        <span className="text-sm text-gray-600">Total Employees</span>
-        <div className="w-10 h-10 bg-purple-200 rounded-lg flex items-center justify-center">
-          <Users className="w-5 h-5 text-purple-700" />
-        </div>
-      </div>
-      <div className="mb-2">
-        <div className="text-3xl font-bold text-gray-900">{weeklySummary.total_employees || 0}</div>
-      </div>
-      <div className="flex items-center justify-between">
-        <span className="text-xs text-gray-500">Performance</span>
-        <span className="text-xs font-semibold text-purple-700">100%</span>
-      </div>
-      <div className="mt-2 w-full bg-purple-200 rounded-full h-1.5">
-        <div className="bg-purple-600 h-1.5 rounded-full transition-all" style={{ width: "100%" }}></div>
-      </div>
-    </div>
+              <div className="bg-white/70 backdrop-blur-xl rounded-[2rem] p-6 shadow-xl shadow-orange-100/20 border border-white/40 group hover:scale-[1.02] transition-transform duration-300">
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-sm font-medium text-gray-600">Total Employees</span>
+                  <div className="w-12 h-12 bg-purple-100 rounded-2xl flex items-center justify-center group-hover:bg-purple-200 transition-colors">
+                    <Users className="w-6 h-6 text-purple-600" />
+                  </div>
+                </div>
+                <div className="mb-3">
+                  <div className="text-3xl font-bold text-gray-900">{weeklySummary.total_employees || 0}</div>
+                  <div className="flex items-center gap-1 text-xs font-medium text-purple-600 bg-purple-50 px-2 py-1 rounded-full w-fit mt-2">
+                    <Users className="w-3 h-3" />
+                    <span>Active staff</span>
+                  </div>
+                </div>
+                <div className="mt-4 w-full bg-gray-100 rounded-full h-2 overflow-hidden">
+                  <div className="bg-gradient-to-r from-purple-500 to-purple-400 h-full rounded-full transition-all duration-1000 ease-out" style={{ width: "100%" }}></div>
+                </div>
+              </div>
 
-    <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl p-6 shadow-sm border border-orange-200">
-      <div className="flex items-center justify-between mb-3">
-        <span className="text-sm text-gray-600">Absent This Week</span>
-        <div className="w-10 h-10 bg-orange-200 rounded-lg flex items-center justify-center">
-          <AlertTriangle className="w-5 h-5 text-orange-700" />
-        </div>
-      </div>
-      <div className="mb-2">
-        <div className="text-3xl font-bold text-gray-900">{weeklySummary.unique_absent_employees_count || 0}</div>
-      </div>
-      <div className="flex items-center justify-between">
-        <span className="text-xs text-gray-500">Performance</span>
-        <span className="text-xs font-semibold text-orange-700">
-          {weeklySummary.total_employees ? Math.round((weeklySummary.unique_absent_employees_count / weeklySummary.total_employees) * 100) : 0}%
-        </span>
-      </div>
-      <div className="mt-2 w-full bg-orange-200 rounded-full h-1.5">
-        <div
-          className="bg-orange-600 h-1.5 rounded-full transition-all"
-          style={{ width: `${weeklySummary.total_employees ? Math.round((weeklySummary.unique_absent_employees_count / weeklySummary.total_employees) * 100) : 0}%` }}
-        ></div>
-      </div>
-    </div>
-  </div>
+              <div className="bg-white/70 backdrop-blur-xl rounded-[2rem] p-6 shadow-xl shadow-orange-100/20 border border-white/40 group hover:scale-[1.02] transition-transform duration-300">
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-sm font-medium text-gray-600">Absent This Week</span>
+                  <div className="w-12 h-12 bg-orange-100 rounded-2xl flex items-center justify-center group-hover:bg-orange-200 transition-colors">
+                    <AlertTriangle className="w-6 h-6 text-orange-600" />
+                  </div>
+                </div>
+                <div className="mb-3">
+                  <div className="text-3xl font-bold text-gray-900">{weeklySummary.unique_absent_employees_count || 0}</div>
+                  <div className="flex items-center gap-1 text-xs font-medium text-orange-600 bg-orange-50 px-2 py-1 rounded-full w-fit mt-2">
+                    <AlertTriangle className="w-3 h-3" />
+                    <span>Needs attention</span>
+                  </div>
+                </div>
+                <div className="mt-4 w-full bg-gray-100 rounded-full h-2 overflow-hidden">
+                  <div
+                    className="bg-gradient-to-r from-orange-500 to-orange-400 h-full rounded-full transition-all duration-1000 ease-out"
+                    style={{ width: `${weeklySummary.total_employees ? Math.round((weeklySummary.unique_absent_employees_count / weeklySummary.total_employees) * 100) : 0}%` }}
+                  ></div>
+                </div>
+              </div>
+            </div>
 
   {/* Second Row for PPE Compliance Distribution and Needs Improvement */}
-  <div className="grid grid-cols-2 gap-6 text-left">
+  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 text-left">
     {/* PPE Compliance Distribution */}
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+    <div className="bg-white/70 backdrop-blur-xl rounded-[2rem] shadow-xl shadow-orange-100/20 border border-white/40 p-6">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-lg font-semibold text-gray-900">PPE Compliance Distribution</h2>
+        <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+          <Shield className="w-5 h-5 text-orange-500" />
+          PPE Compliance Distribution
+        </h2>
         <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
           {pieCompliance.total_compliance_percent || 0}% Compliant
         </span>
@@ -762,17 +753,17 @@ const safetyComparisonMonth = monthlyData?.safety_comparison || [];
 
       <div className="space-y-3">
         {pieCompliance.distribution?.map((item, index) => (
-          <div key={index} className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className={`w-3 h-3 rounded-full ${
-                index === 0 ? 'bg-green-500' : index === 1 ? 'bg-yellow-500' : 'bg-red-500'
+          <div key={index} className="flex items-center justify-between p-3 rounded-lg bg-white/50 border border-gray-100">
+            <div className="flex items-center gap-3">
+              <div className={`w-3 h-3 rounded-full shadow-sm ${
+                index === 0 ? 'bg-green-500 shadow-green-200' : index === 1 ? 'bg-yellow-500 shadow-yellow-200' : 'bg-red-500 shadow-red-200'
               }`}></div>
-              <span className="text-sm text-gray-700">
+              <span className="text-sm font-medium text-gray-700">
                 {item.name === "Fully" ? "Fully Compliant" :
                  item.name === "Partially" ? "Partially Compliant" : "Non-Compliant"}
               </span>
             </div>
-            <span className="text-sm font-medium text-gray-900">
+            <span className="text-sm font-bold text-gray-900">
               {item.name === "Fully" ? (pieCompliance.week_fully || 0) :
                item.name === "Partially" ? (pieCompliance.week_partial || 0) :
                (pieCompliance.week_non || 0)} ({item.percent || 0}%)
@@ -783,11 +774,11 @@ const safetyComparisonMonth = monthlyData?.safety_comparison || [];
     </div>
 
     {/* Needs Improvement */}
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+    <div className="bg-white/70 backdrop-blur-xl rounded-[2rem] shadow-xl shadow-orange-100/20 border border-white/40 p-6">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <AlertTriangle className="w-5 h-5 text-orange-500" />
-          <h2 className="text-lg font-semibold text-gray-900">Needs Improvement</h2>
+          <h2 className="text-xl font-bold text-gray-900">Needs Improvement</h2>
         </div>
         <span className="px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs font-medium">
           {topImprovement.length} Alerts
@@ -800,25 +791,25 @@ const safetyComparisonMonth = monthlyData?.safety_comparison || [];
     .filter(employee => employee.email !== "wintwah@gmail.com" && employee.name && employee.employee_id)
     .slice(0, 4)
     .map((employee, index) => (
-    <div key={index} className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+    <div key={index} className="bg-gradient-to-br from-orange-50 to-white border border-orange-100 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white font-semibold text-sm">
+          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white font-bold text-sm shadow-md shadow-orange-200">
             {employee.name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'EMP'}
           </div>
           <div>
-            <div className="font-medium text-gray-900">{employee.name}</div>
+            <div className="font-semibold text-gray-900">{employee.name}</div>
             <div className="text-xs text-gray-500">{employee.employee_id}</div>
           </div>
         </div>
         <div className="text-right">
-          <div className="text-lg font-bold text-orange-600">{employee.overall_worn_percent || 0}%</div>
-          <div className="text-xs text-gray-500">PPE</div>
+          <div className="text-xl font-bold text-orange-600">{employee.overall_worn_percent || 0}%</div>
+          <div className="text-xs text-gray-500">PPE Score</div>
         </div>
       </div>
-      <div className="flex items-center gap-1 text-xs text-gray-600">
-        <span className="inline-block w-1.5 h-1.5 bg-red-500 rounded-full"></span>
-        <span>{employee.violation_count || 0} violations</span>
+      <div className="flex items-center gap-2 text-xs text-gray-600 bg-white/50 p-2 rounded-lg">
+        <span className="inline-block w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+        <span className="font-medium">{employee.violation_count || 0} active violations</span>
       </div>
     </div>
   ))}
@@ -827,26 +818,29 @@ const safetyComparisonMonth = monthlyData?.safety_comparison || [];
   </div>
 
   {/* Third Row for Per Employee Attendance and PPE Violations */}
-  <div className="grid grid-cols-2 gap-6 text-left">
+  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 text-left">
     {/* Per Employee Attendance */}
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-      <h2 className="text-lg font-semibold text-gray-900 mb-6">PPE Employee Attendance</h2>
+    <div className="bg-white/70 backdrop-blur-xl rounded-[2rem] shadow-xl shadow-orange-100/20 border border-white/40 p-6">
+      <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+        <Users className="w-5 h-5 text-orange-500" />
+        PPE Employee Attendance
+      </h2>
       <p className="text-sm text-gray-500 mb-6">Click on any employee to view details</p>
 
-      <div className="space-y-4">
+      <div className="space-y-3">
         {employeeAttendance.slice(0, 8).map((employee, index) => (
-          <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-green-200 flex items-center justify-center text-green-500 font-semibold text-sm">
+          <div key={index} className="flex items-center justify-between p-4 rounded-xl hover:bg-orange-50/50 transition-colors bg-white/50 border border-gray-100">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-green-100 to-green-200 flex items-center justify-center text-green-600 font-bold text-sm shadow-sm">
                 {employee.name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'EMP'}
               </div>
               <div>
-                <div className="font-medium text-gray-900">{employee.name || 'Unknown'}</div>
+                <div className="font-semibold text-gray-900">{employee.name || 'Unknown'}</div>
                 <div className="text-sm text-gray-500">{employee.employee_id}</div>
               </div>
             </div>
             <div className="text-right">
-              <div className="text-lg font-bold text-green-600">{employee.attendance_rate || 0}%</div>
+              <div className="text-xl font-bold text-green-600">{employee.attendance_rate || 0}%</div>
               <div className="text-xs text-gray-500">{employee.days_present || 0}/7 days</div>
             </div>
           </div>
@@ -855,25 +849,28 @@ const safetyComparisonMonth = monthlyData?.safety_comparison || [];
     </div>
 
     {/* PPE Violations */}
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-      <h2 className="text-lg font-semibold text-gray-900 mb-4">PPE Violations This Week</h2>
+    <div className="bg-white/70 backdrop-blur-xl rounded-[2rem] shadow-xl shadow-orange-100/20 border border-white/40 p-6">
+      <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+        <AlertTriangle className="w-5 h-5 text-orange-500" />
+        PPE Violations This Week
+      </h2>
       <p className="text-sm text-gray-500 mb-6">Most common equipment violations</p>
 
-      <div className="space-y-4">
+      <div className="space-y-5">
         {ppeViolationsWeek.map((item, index) => (
           <div key={index}>
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-sm text-gray-700 capitalize">{item.item}</span>
-              <span className="text-sm font-semibold text-gray-900">{item.count || 0}</span>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium text-gray-700 capitalize">{item.item}</span>
+              <span className="text-sm font-bold text-gray-900">{item.count || 0}</span>
             </div>
-            <div className="relative h-8 bg-gray-100 rounded overflow-hidden">
+            <div className="relative h-2 bg-gray-100 rounded-full overflow-hidden">
               <div
                 className={`absolute inset-y-0 left-0 ${
                   index === 0 ? 'bg-red-400' :
                   index === 1 ? 'bg-orange-400' :
                   index === 2 ? 'bg-yellow-400' :
                   index === 3 ? 'bg-green-400' : 'bg-green-500'
-                } transition-all rounded`}
+                } transition-all duration-1000 ease-out rounded-full`}
                 style={{ width: `${((item.count || 0) / Math.max(...ppeViolationsWeek.map(v => v.count || 0), 1)) * 100}%` }}
               ></div>
             </div>
@@ -884,32 +881,51 @@ const safetyComparisonMonth = monthlyData?.safety_comparison || [];
   </div>
 
   {/* Fourth Row for Daily Attendance Rate and Company-wide Safety Score */}
-  <div className="grid grid-cols-2 gap-6 text-left">
+  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 text-left">
     {/* Daily Attendance Rate Chart */}
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-      <h2 className="text-lg font-semibold text-gray-900 mb-4">Daily Attendance Rate</h2>
+    <div className="bg-white/70 backdrop-blur-xl rounded-[2rem] shadow-xl shadow-orange-100/20 border border-white/40 p-6">
+      <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+        <TrendingUp className="w-5 h-5 text-green-500" />
+        Daily Attendance Rate
+      </h2>
       <p className="text-sm text-gray-500 mb-6">This Week vs Last Week comparison</p>
 
       {/* Line Chart */}
       <div className="h-48">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={attendanceComparison}>
-            <CartesianGrid strokeDasharray="3 3" />
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
             <XAxis
               dataKey="date"
               tickFormatter={(date) =>
                 new Date(date).toLocaleDateString('en-US', { weekday: 'short' })
               }
-              tick={{ fontSize: 12 }}
+              tick={{ fontSize: 12, fill: '#6B7280' }}
+              axisLine={false}
+              tickLine={false}
+              dy={10}
             />
-            <YAxis />
-            <Tooltip />
+            <YAxis 
+              tick={{ fontSize: 12, fill: '#6B7280' }}
+              axisLine={false}
+              tickLine={false}
+              dx={-10}
+            />
+            <Tooltip 
+              contentStyle={{ 
+                backgroundColor: 'rgba(255, 255, 255, 0.9)', 
+                borderRadius: '12px', 
+                border: 'none', 
+                boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)' 
+              }}
+            />
             <Line
               type="monotone"
               dataKey="this_week_attendance"
               stroke="#22c55e"
               strokeWidth={3}
-              dot={{ r: 4, fill: "#22c55e" }}
+              dot={{ r: 4, fill: "#22c55e", strokeWidth: 2, stroke: "#fff" }}
+              activeDot={{ r: 6, fill: "#22c55e", strokeWidth: 0 }}
             />
           </LineChart>
         </ResponsiveContainer>
@@ -917,42 +933,62 @@ const safetyComparisonMonth = monthlyData?.safety_comparison || [];
 
       <div className="flex justify-center gap-4 mt-4">
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 bg-blue-500 rounded"></div>
-          <span className="text-xs text-gray-600">Last Week</span>
+          <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+          <span className="text-xs font-medium text-gray-600">Last Week</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 bg-green-500 rounded"></div>
-          <span className="text-xs text-gray-600">This Week</span>
+          <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+          <span className="text-xs font-medium text-gray-600">This Week</span>
         </div>
       </div>
     </div>
 
     {/* Company-wide Safety Score */}
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-      <h2 className="text-lg font-semibold text-gray-900 mb-4">Company-wide Safety Score</h2>
+    <div className="bg-white/70 backdrop-blur-xl rounded-[2rem] shadow-xl shadow-orange-100/20 border border-white/40 p-6">
+      <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+        <Shield className="w-5 h-5 text-orange-500" />
+        Company-wide Safety Score
+      </h2>
       <p className="text-sm text-gray-500 mb-6">This week trend with 95% goal line</p>
 
       {/* Line Chart */}
       <div className="h-48">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={safetyComparison}>
-            <CartesianGrid strokeDasharray="3 3" />
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
             <XAxis
               dataKey="date"
               tickFormatter={(date) =>
                 new Date(date).toLocaleDateString('en-US', { weekday: 'short' })
               }
-              tick={{ fontSize: 12 }}
+              tick={{ fontSize: 12, fill: '#6B7280' }}
+              axisLine={false}
+              tickLine={false}
+              dy={10}
             />
-            <YAxis domain={[0, 100]} />
-            <Tooltip />
-            <ReferenceLine y={95} stroke="#9ca3af" strokeDasharray="4 4" /> {/* 95% goal line */}
+            <YAxis 
+              domain={[0, 100]} 
+              tick={{ fontSize: 12, fill: '#6B7280' }}
+              axisLine={false}
+              tickLine={false}
+              dx={-10}
+            />
+            <Tooltip 
+              contentStyle={{ 
+                backgroundColor: 'rgba(255, 255, 255, 0.9)', 
+                borderRadius: '12px', 
+                border: 'none', 
+                boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)' 
+              }}
+            />
+            <ReferenceLine y={95} stroke="#f97316" strokeDasharray="4 4" label={{ value: 'Goal (95%)', fill: '#f97316', fontSize: 10, position: 'right' }} />
             <Line
               type="monotone"
               dataKey="this_week_safety"
               stroke="#22c55e"
               strokeWidth={3}
-              dot={{ r: 4, fill: "#22c55e" }}
+              dot={{ r: 4, fill: "#22c55e", strokeWidth: 2, stroke: "#fff" }}
+              activeDot={{ r: 6, fill: "#22c55e", strokeWidth: 0 }}
             />
           </LineChart>
         </ResponsiveContainer>
@@ -960,12 +996,12 @@ const safetyComparisonMonth = monthlyData?.safety_comparison || [];
 
       <div className="flex justify-center gap-4 mt-4">
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 bg-orange-500 rounded"></div>
-          <span className="text-xs text-gray-600">Last Week</span>
+          <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
+          <span className="text-xs font-medium text-gray-600">Last Week</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 bg-purple-500 rounded"></div>
-          <span className="text-xs text-gray-600">This Week</span>
+          <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
+          <span className="text-xs font-medium text-gray-600">This Week</span>
         </div>
       </div>
     </div>
@@ -975,90 +1011,87 @@ const safetyComparisonMonth = monthlyData?.safety_comparison || [];
           /* Monthly view */
 <div className="space-y-6">
   {/* First Row for Summary Cards */}
-  <div className="grid grid-cols-4 gap-6 text-left">
-    <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-6 shadow-sm border border-green-200">
-      <div className="flex items-center justify-between mb-3">
-        <span className="text-sm text-gray-600">Attendance Rate This Month</span>
-        <div className="w-10 h-10 bg-green-200 rounded-lg flex items-center justify-center">
-          <Calendar className="w-5 h-5 text-green-700" />
+  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 text-left">
+    <div className="bg-white/70 backdrop-blur-xl rounded-[2rem] p-6 shadow-xl shadow-orange-100/20 border border-white/40 group hover:scale-[1.02] transition-transform duration-300">
+      <div className="flex items-center justify-between mb-4">
+        <span className="text-sm font-medium text-gray-600">Attendance Rate</span>
+        <div className="w-12 h-12 bg-green-100 rounded-2xl flex items-center justify-center group-hover:bg-green-200 transition-colors">
+          <Calendar className="w-6 h-6 text-green-600" />
         </div>
       </div>
-      <div className="mb-2">
+      <div className="mb-3">
         <div className="text-3xl font-bold text-gray-900">{monthlySummary.average_attendance_rate_month || 0}%</div>
-        <div className="text-xs text-green-600 font-medium">+5% vs last month</div>
+        <div className="flex items-center gap-1 text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full w-fit mt-2">
+          <TrendingUp className="w-3 h-3" />
+          <span>+5% vs last month</span>
+        </div>
       </div>
-      <div className="flex items-center justify-between">
-        <span className="text-xs text-gray-500">Performance</span>
-        <span className="text-xs font-semibold text-green-700">{monthlySummary.average_attendance_rate_month || 0}%</span>
-      </div>
-      <div className="mt-2 w-full bg-green-200 rounded-full h-1.5">
+      <div className="mt-4 w-full bg-gray-100 rounded-full h-2 overflow-hidden">
         <div
-          className="bg-green-600 h-1.5 rounded-full transition-all"
+          className="bg-gradient-to-r from-green-500 to-green-400 h-full rounded-full transition-all duration-1000 ease-out"
           style={{ width: `${monthlySummary.average_attendance_rate_month || 0}%` }}
         ></div>
       </div>
     </div>
 
-    <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 shadow-sm border border-blue-200">
-      <div className="flex items-center justify-between mb-3">
-        <span className="text-sm text-gray-600">Average Safety Compliance</span>
-        <div className="w-10 h-10 bg-blue-200 rounded-lg flex items-center justify-center">
-          <Shield className="w-5 h-5 text-blue-700" />
+    <div className="bg-white/70 backdrop-blur-xl rounded-[2rem] p-6 shadow-xl shadow-orange-100/20 border border-white/40 group hover:scale-[1.02] transition-transform duration-300">
+      <div className="flex items-center justify-between mb-4">
+        <span className="text-sm font-medium text-gray-600">Average Safety Compliance</span>
+        <div className="w-12 h-12 bg-blue-100 rounded-2xl flex items-center justify-center group-hover:bg-blue-200 transition-colors">
+          <Shield className="w-6 h-6 text-blue-600" />
         </div>
       </div>
-      <div className="mb-2">
+      <div className="mb-3">
         <div className="text-3xl font-bold text-gray-900">{monthlySummary.average_safety_rate_month || 0}%</div>
+        <div className="flex items-center gap-1 text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-full w-fit mt-2">
+          <Shield className="w-3 h-3" />
+          <span>Average score</span>
+        </div>
       </div>
-      <div className="flex items-center justify-between">
-        <span className="text-xs text-gray-500">Performance</span>
-        <span className="text-xs font-semibold text-blue-700">{monthlySummary.average_safety_rate_month || 0}%</span>
-      </div>
-      <div className="mt-2 w-full bg-blue-200 rounded-full h-1.5">
+      <div className="mt-4 w-full bg-gray-100 rounded-full h-2 overflow-hidden">
         <div
-          className="bg-blue-600 h-1.5 rounded-full transition-all"
+          className="bg-gradient-to-r from-blue-500 to-blue-400 h-full rounded-full transition-all duration-1000 ease-out"
           style={{ width: `${monthlySummary.average_safety_rate_month || 0}%` }}
         ></div>
       </div>
     </div>
 
-    <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-6 shadow-sm border border-purple-200">
-      <div className="flex items-center justify-between mb-3">
-        <span className="text-sm text-gray-600">Total Employees</span>
-        <div className="w-10 h-10 bg-purple-200 rounded-lg flex items-center justify-center">
-          <Users className="w-5 h-5 text-purple-700" />
+    <div className="bg-white/70 backdrop-blur-xl rounded-[2rem] p-6 shadow-xl shadow-orange-100/20 border border-white/40 group hover:scale-[1.02] transition-transform duration-300">
+      <div className="flex items-center justify-between mb-4">
+        <span className="text-sm font-medium text-gray-600">Total Employees</span>
+        <div className="w-12 h-12 bg-purple-100 rounded-2xl flex items-center justify-center group-hover:bg-purple-200 transition-colors">
+          <Users className="w-6 h-6 text-purple-600" />
         </div>
       </div>
-      <div className="mb-2">
+      <div className="mb-3">
         <div className="text-3xl font-bold text-gray-900">{monthlySummary.total_employees || 0}</div>
+        <div className="flex items-center gap-1 text-xs font-medium text-purple-600 bg-purple-50 px-2 py-1 rounded-full w-fit mt-2">
+          <Users className="w-3 h-3" />
+          <span>Active staff</span>
+        </div>
       </div>
-      <div className="flex items-center justify-between">
-        <span className="text-xs text-gray-500">Performance</span>
-        <span className="text-xs font-semibold text-purple-700">100%</span>
-      </div>
-      <div className="mt-2 w-full bg-purple-200 rounded-full h-1.5">
-        <div className="bg-purple-600 h-1.5 rounded-full transition-all" style={{ width: "100%" }}></div>
+      <div className="mt-4 w-full bg-gray-100 rounded-full h-2 overflow-hidden">
+        <div className="bg-gradient-to-r from-purple-500 to-purple-400 h-full rounded-full transition-all duration-1000 ease-out" style={{ width: "100%" }}></div>
       </div>
     </div>
 
-    <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl p-6 shadow-sm border border-orange-200">
-      <div className="flex items-center justify-between mb-3">
-        <span className="text-sm text-gray-600">Absent This Month</span>
-        <div className="w-10 h-10 bg-orange-200 rounded-lg flex items-center justify-center">
-          <AlertTriangle className="w-5 h-5 text-orange-700" />
+    <div className="bg-white/70 backdrop-blur-xl rounded-[2rem] p-6 shadow-xl shadow-orange-100/20 border border-white/40 group hover:scale-[1.02] transition-transform duration-300">
+      <div className="flex items-center justify-between mb-4">
+        <span className="text-sm font-medium text-gray-600">Absent This Month</span>
+        <div className="w-12 h-12 bg-orange-100 rounded-2xl flex items-center justify-center group-hover:bg-orange-200 transition-colors">
+          <AlertTriangle className="w-6 h-6 text-orange-600" />
         </div>
       </div>
-      <div className="mb-2">
+      <div className="mb-3">
         <div className="text-3xl font-bold text-gray-900">{monthlySummary.unique_absent_employees_count || 0}</div>
+        <div className="flex items-center gap-1 text-xs font-medium text-orange-600 bg-orange-50 px-2 py-1 rounded-full w-fit mt-2">
+          <AlertTriangle className="w-3 h-3" />
+          <span>Needs attention</span>
+        </div>
       </div>
-      <div className="flex items-center justify-between">
-        <span className="text-xs text-gray-500">Performance</span>
-        <span className="text-xs font-semibold text-orange-700">
-          {monthlySummary.total_employees ? Math.round((monthlySummary.unique_absent_employees_count / monthlySummary.total_employees) * 100) : 0}%
-        </span>
-      </div>
-      <div className="mt-2 w-full bg-orange-200 rounded-full h-1.5">
+      <div className="mt-4 w-full bg-gray-100 rounded-full h-2 overflow-hidden">
         <div
-          className="bg-orange-600 h-1.5 rounded-full transition-all"
+          className="bg-gradient-to-r from-orange-500 to-orange-400 h-full rounded-full transition-all duration-1000 ease-out"
           style={{ width: `${monthlySummary.total_employees ? Math.round((monthlySummary.unique_absent_employees_count / monthlySummary.total_employees) * 100) : 0}%` }}
         ></div>
       </div>
@@ -1066,11 +1099,14 @@ const safetyComparisonMonth = monthlyData?.safety_comparison || [];
   </div>
 
   {/* Second Row for PPE Compliance Distribution and Needs Improvement */}
-  <div className="grid grid-cols-2 gap-6 text-left">
+  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 text-left">
     {/* PPE Compliance Distribution */}
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+    <div className="bg-white/70 backdrop-blur-xl rounded-[2rem] shadow-xl shadow-orange-100/20 border border-white/40 p-6">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-lg font-semibold text-gray-900">PPE Compliance Distribution</h2>
+        <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+          <Shield className="w-5 h-5 text-orange-500" />
+          PPE Compliance Distribution
+        </h2>
         <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
           {pieComplianceMonth.total_compliance_percent || 0}% Compliant
         </span>
@@ -1126,17 +1162,17 @@ const safetyComparisonMonth = monthlyData?.safety_comparison || [];
 
       <div className="space-y-3">
         {pieComplianceMonth.distribution?.map((item, index) => (
-          <div key={index} className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className={`w-3 h-3 rounded-full ${
-                index === 0 ? 'bg-green-500' : index === 1 ? 'bg-yellow-500' : 'bg-red-500'
+          <div key={index} className="flex items-center justify-between p-3 rounded-lg bg-white/50 border border-gray-100">
+            <div className="flex items-center gap-3">
+              <div className={`w-3 h-3 rounded-full shadow-sm ${
+                index === 0 ? 'bg-green-500 shadow-green-200' : index === 1 ? 'bg-yellow-500 shadow-yellow-200' : 'bg-red-500 shadow-red-200'
               }`}></div>
-              <span className="text-sm text-gray-700">
+              <span className="text-sm font-medium text-gray-700">
                 {item.name === "Fully" ? "Fully Compliant" :
                  item.name === "Partially" ? "Partially Compliant" : "Non-Compliant"}
               </span>
             </div>
-            <span className="text-sm font-medium text-gray-900">
+            <span className="text-sm font-bold text-gray-900">
               {item.name === "Fully" ? (pieComplianceMonth.month_fully || 0) :
                item.name === "Partially" ? (pieComplianceMonth.month_partial || 0) :
                (pieComplianceMonth.month_non || 0)} ({item.percent || 0}%)
@@ -1147,11 +1183,11 @@ const safetyComparisonMonth = monthlyData?.safety_comparison || [];
     </div>
 
     {/* Needs Improvement */}
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+    <div className="bg-white/70 backdrop-blur-xl rounded-[2rem] shadow-xl shadow-orange-100/20 border border-white/40 p-6">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <AlertTriangle className="w-5 h-5 text-orange-500" />
-          <h2 className="text-lg font-semibold text-gray-900">Needs Improvement</h2>
+          <h2 className="text-xl font-bold text-gray-900">Needs Improvement</h2>
         </div>
         <span className="px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs font-medium">
           {topImprovementMonth.length} Alerts
@@ -1164,25 +1200,25 @@ const safetyComparisonMonth = monthlyData?.safety_comparison || [];
     .filter(employee => employee.email !== "wintwah@gmail.com" && employee.name && employee.employee_id)
     .slice(0, 4)
     .map((employee, index) => (
-    <div key={index} className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+    <div key={index} className="bg-gradient-to-br from-orange-50 to-white border border-orange-100 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white font-semibold text-sm">
+          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white font-bold text-sm shadow-md shadow-orange-200">
             {employee.name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'EMP'}
           </div>
           <div>
-            <div className="font-medium text-gray-900">{employee.name}</div>
+            <div className="font-semibold text-gray-900">{employee.name}</div>
             <div className="text-xs text-gray-500">{employee.employee_id}</div>
           </div>
         </div>
         <div className="text-right">
-          <div className="text-lg font-bold text-orange-600">{employee.overall_worn_percent || 0}%</div>
-          <div className="text-xs text-gray-500">PPE</div>
+          <div className="text-xl font-bold text-orange-600">{employee.overall_worn_percent || 0}%</div>
+          <div className="text-xs text-gray-500">PPE Score</div>
         </div>
       </div>
-      <div className="flex items-center gap-1 text-xs text-gray-600">
-        <span className="inline-block w-1.5 h-1.5 bg-red-500 rounded-full"></span>
-        <span>{employee.violation_count || 0} violations</span>
+      <div className="flex items-center gap-2 text-xs text-gray-600 bg-white/50 p-2 rounded-lg">
+        <span className="inline-block w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+        <span className="font-medium">{employee.violation_count || 0} active violations</span>
       </div>
     </div>
   ))}
@@ -1191,26 +1227,29 @@ const safetyComparisonMonth = monthlyData?.safety_comparison || [];
   </div>
 
   {/* Third Row for Per Employee Attendance and PPE Violations */}
-  <div className="grid grid-cols-2 gap-6 text-left">
+  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 text-left">
     {/* Per Employee Attendance */}
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-      <h2 className="text-lg font-semibold text-gray-900 mb-6">Monthly Employee Attendance</h2>
+    <div className="bg-white/70 backdrop-blur-xl rounded-[2rem] shadow-xl shadow-orange-100/20 border border-white/40 p-6">
+      <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+        <Users className="w-5 h-5 text-orange-500" />
+        Monthly Employee Attendance
+      </h2>
       <p className="text-sm text-gray-500 mb-6">Click on any employee to view details</p>
 
-      <div className="space-y-4">
+      <div className="space-y-3">
         {employeeAttendanceMonth.slice(0, 8).map((employee, index) => (
-          <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-green-200 flex items-center justify-center text-green-500 font-semibold text-sm">
+          <div key={index} className="flex items-center justify-between p-4 rounded-xl hover:bg-orange-50/50 transition-colors bg-white/50 border border-gray-100">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-green-100 to-green-200 flex items-center justify-center text-green-600 font-bold text-sm shadow-sm">
                 {employee.name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'EMP'}
               </div>
               <div>
-                <div className="font-medium text-gray-900">{employee.name || 'Unknown'}</div>
+                <div className="font-semibold text-gray-900">{employee.name || 'Unknown'}</div>
                 <div className="text-sm text-gray-500">{employee.employee_id}</div>
               </div>
             </div>
             <div className="text-right">
-              <div className="text-lg font-bold text-green-600">{employee.attendance_rate || 0}%</div>
+              <div className="text-xl font-bold text-green-600">{employee.attendance_rate || 0}%</div>
               <div className="text-xs text-gray-500">{employee.days_present || 0}/{employee.total_days || 30} days</div>
             </div>
           </div>
@@ -1219,25 +1258,28 @@ const safetyComparisonMonth = monthlyData?.safety_comparison || [];
     </div>
 
     {/* PPE Violations This Month */}
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-      <h2 className="text-lg font-semibold text-gray-900 mb-4">PPE Violations This Month</h2>
+    <div className="bg-white/70 backdrop-blur-xl rounded-[2rem] shadow-xl shadow-orange-100/20 border border-white/40 p-6">
+      <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+        <AlertTriangle className="w-5 h-5 text-orange-500" />
+        PPE Violations This Month
+      </h2>
       <p className="text-sm text-gray-500 mb-6">Most common equipment violations</p>
 
-      <div className="space-y-4">
+      <div className="space-y-5">
         {ppeViolationsMonth.map((item, index) => (
           <div key={index}>
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-sm text-gray-700 capitalize">{item.item}</span>
-              <span className="text-sm font-semibold text-gray-900">{item.count || 0}</span>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium text-gray-700 capitalize">{item.item}</span>
+              <span className="text-sm font-bold text-gray-900">{item.count || 0}</span>
             </div>
-            <div className="relative h-8 bg-gray-100 rounded overflow-hidden">
+            <div className="relative h-2 bg-gray-100 rounded-full overflow-hidden">
               <div
                 className={`absolute inset-y-0 left-0 ${
                   index === 0 ? 'bg-red-400' :
                   index === 1 ? 'bg-orange-400' :
                   index === 2 ? 'bg-yellow-400' :
                   index === 3 ? 'bg-green-400' : 'bg-green-500'
-                } transition-all rounded`}
+                } transition-all duration-1000 ease-out rounded-full`}
                 style={{ width: `${((item.count || 0) / Math.max(...ppeViolationsMonth.map(v => v.count || 0), 1)) * 100}%` }}
               ></div>
             </div>
@@ -1248,30 +1290,49 @@ const safetyComparisonMonth = monthlyData?.safety_comparison || [];
   </div>
 
   {/* Fourth Row for Weekly Attendance Rate and Company-wide Safety Score */}
-  <div className="grid grid-cols-2 gap-6 text-left">
+  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 text-left">
     {/* Weekly Attendance Rate Chart */}
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-      <h2 className="text-lg font-semibold text-gray-900 mb-4">Weekly Attendance Rate</h2>
+    <div className="bg-white/70 backdrop-blur-xl rounded-[2rem] shadow-xl shadow-orange-100/20 border border-white/40 p-6">
+      <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+        <TrendingUp className="w-5 h-5 text-green-500" />
+        Weekly Attendance Rate
+      </h2>
       <p className="text-sm text-gray-500 mb-6">This Month vs Last Month comparison</p>
 
       {/* Line Chart */}
       <div className="h-48">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={attendanceComparisonMonth}>
-            <CartesianGrid strokeDasharray="3 3" />
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
             <XAxis
               dataKey="week_number"
               tickFormatter={(weekNum) => `Week ${weekNum}`}
-              tick={{ fontSize: 12 }}
+              tick={{ fontSize: 12, fill: '#6B7280' }}
+              axisLine={false}
+              tickLine={false}
+              dy={10}
             />
-            <YAxis />
-            <Tooltip />
+            <YAxis 
+              tick={{ fontSize: 12, fill: '#6B7280' }}
+              axisLine={false}
+              tickLine={false}
+              dx={-10}
+            />
+            <Tooltip 
+              contentStyle={{ 
+                backgroundColor: 'rgba(255, 255, 255, 0.9)', 
+                borderRadius: '12px', 
+                border: 'none', 
+                boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)' 
+              }}
+            />
             <Line
               type="monotone"
               dataKey="this_month_attendance"
               stroke="#22c55e"
               strokeWidth={3}
-              dot={{ r: 4, fill: "#22c55e" }}
+              dot={{ r: 4, fill: "#22c55e", strokeWidth: 2, stroke: "#fff" }}
+              activeDot={{ r: 6, fill: "#22c55e", strokeWidth: 0 }}
             />
             <Line
               type="monotone"
@@ -1287,40 +1348,60 @@ const safetyComparisonMonth = monthlyData?.safety_comparison || [];
 
       <div className="flex justify-center gap-4 mt-4">
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 bg-blue-500 rounded"></div>
-          <span className="text-xs text-gray-600">Last Month</span>
+          <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+          <span className="text-xs font-medium text-gray-600">Last Month</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 bg-green-500 rounded"></div>
-          <span className="text-xs text-gray-600">This Month</span>
+          <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+          <span className="text-xs font-medium text-gray-600">This Month</span>
         </div>
       </div>
     </div>
 
     {/* Company-wide Safety Score */}
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-      <h2 className="text-lg font-semibold text-gray-900 mb-4">Company-wide Safety Score</h2>
+    <div className="bg-white/70 backdrop-blur-xl rounded-[2rem] shadow-xl shadow-orange-100/20 border border-white/40 p-6">
+      <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+        <Shield className="w-5 h-5 text-orange-500" />
+        Company-wide Safety Score
+      </h2>
       <p className="text-sm text-gray-500 mb-6">Monthly trend with 95% goal line</p>
 
       {/* Line Chart */}
       <div className="h-48">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={safetyComparisonMonth}>
-            <CartesianGrid strokeDasharray="3 3" />
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
             <XAxis
               dataKey="week_number"
               tickFormatter={(weekNum) => `Week ${weekNum}`}
-              tick={{ fontSize: 12 }}
+              tick={{ fontSize: 12, fill: '#6B7280' }}
+              axisLine={false}
+              tickLine={false}
+              dy={10}
             />
-            <YAxis domain={[0, 100]} />
-            <Tooltip />
-            <ReferenceLine y={95} stroke="#9ca3af" strokeDasharray="4 4" /> {/* 95% goal line */}
+            <YAxis 
+              domain={[0, 100]} 
+              tick={{ fontSize: 12, fill: '#6B7280' }}
+              axisLine={false}
+              tickLine={false}
+              dx={-10}
+            />
+            <Tooltip 
+              contentStyle={{ 
+                backgroundColor: 'rgba(255, 255, 255, 0.9)', 
+                borderRadius: '12px', 
+                border: 'none', 
+                boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)' 
+              }}
+            />
+            <ReferenceLine y={95} stroke="#f97316" strokeDasharray="4 4" label={{ value: 'Goal (95%)', fill: '#f97316', fontSize: 10, position: 'right' }} />
             <Line
               type="monotone"
               dataKey="this_month_safety"
               stroke="#22c55e"
               strokeWidth={3}
-              dot={{ r: 4, fill: "#22c55e" }}
+              dot={{ r: 4, fill: "#22c55e", strokeWidth: 2, stroke: "#fff" }}
+              activeDot={{ r: 6, fill: "#22c55e", strokeWidth: 0 }}
             />
           </LineChart>
         </ResponsiveContainer>
@@ -1328,12 +1409,12 @@ const safetyComparisonMonth = monthlyData?.safety_comparison || [];
 
       <div className="flex justify-center gap-4 mt-4">
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 bg-orange-500 rounded"></div>
-          <span className="text-xs text-gray-600">Last Month</span>
+          <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
+          <span className="text-xs font-medium text-gray-600">Last Month</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 bg-purple-500 rounded"></div>
-          <span className="text-xs text-gray-600">This Month</span>
+          <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
+          <span className="text-xs font-medium text-gray-600">This Month</span>
         </div>
       </div>
     </div>

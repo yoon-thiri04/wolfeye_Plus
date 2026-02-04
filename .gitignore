@@ -1,0 +1,12 @@
+*.env
+.env.test
+.idea
+__pycache__
+
+
+# Backend
+/backend/venv
+
+# Frontend
+/frontend/node_modules
+/temp_uploads/*

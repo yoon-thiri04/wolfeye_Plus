@@ -1,258 +1,251 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowUpRight, ArrowRight } from "lucide-react";
-import wolfMascot from "../assets/images/wolf-intro.png";
+import { ArrowUpRight, ArrowRight, Menu, X, CheckCircle, Shield, Clock } from "lucide-react";
 import logo from "../assets/images/logo.png";
 import gradientBg from "../assets/images/home-gradient-effect.png";
-import {Link} from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 export default function EmployeeHomepage() {
-  const [isServicesOpen, setIsServicesOpen] = useState(false);
-  const dropdownRef = useRef(null);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const navigate = useNavigate();
 
+  // Scroll effect for navbar
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsServicesOpen(false);
-      }
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 10);
     };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   return (
-    <div className="relative min-h-screen bg-white flex flex-col items-center justify-center px-6 lg:px-0 py-12 overflow-hidden">
-      {/* Gradient Image Background */}
-      <img
-        src={gradientBg}
-        alt="Gradient Background"
-        className="absolute inset-0 w-full h-full object-cover opacity-90 z-0"
-      />
+    <div className="relative min-h-screen bg-white font-sans overflow-x-hidden selection:bg-orange-100 selection:text-orange-900">
+      {/* Background Elements */}
+      <div className="fixed inset-0 z-0 pointer-events-none">
+        <img
+          src={gradientBg}
+          alt="Gradient Background"
+          className="w-full h-full object-cover opacity-60"
+        />
+        <div className="absolute inset-0 bg-gradient-to-br from-orange-50/50 via-white/80 to-white/90 mix-blend-overlay" />
+      </div>
 
-      {/* Header */}
-      <motion.header
-        initial={{ opacity: 0, y: -30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, ease: "easeOut" }}
-        className="w-full flex items-center justify-between py-4 mb-6 relative z-20"
+      {/* Navbar */}
+      <motion.nav
+        initial={{ y: -100 }}
+        animate={{ y: 0 }}
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+          isScrolled
+            ? "bg-white/80 backdrop-blur-xl border-b border-white/20 shadow-sm py-4"
+            : "bg-transparent py-6"
+        }`}
       >
-        {/* Logo Section */}
-        <div className="flex items-center gap-2">
-          <img src={logo} alt="WolfEye+ Logo" className="h-7 w-auto" />
-        </div>
-
-        {/* Right Section (Nav + Profile) */}
-        <div className="flex items-center gap-8">
-          <nav className="flex items-center gap-8 relative">
-            <a href="#home" className="text-gray-900 font-semibold">
-              Home
-            </a>
-            <a
-              href="#about"
-              className="text-gray-500 hover:text-gray-800 transition"
-            >
-              About
-            </a>
-            <a
-              href="#how"
-              className="text-gray-500 hover:text-gray-800 transition"
-            >
-              How it Works
-            </a>
-
-            {/* Services Dropdown */}
-            <div className="relative" ref={dropdownRef}>
-              <button
-                onClick={() => setIsServicesOpen(!isServicesOpen)}
-                className="text-gray-500 hover:text-gray-800 flex items-center gap-1 transition"
-              >
-                Services
-                <svg
-                  className={`w-4 h-4 transform transition-transform ${
-                    isServicesOpen ? "rotate-180" : "rotate-0"
-                  }`}
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  viewBox="0 0 24 24"
-                >
-                  <path d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
-
-              <AnimatePresence>
-                {isServicesOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.25, ease: "easeOut" }}
-                    className="absolute top-10 right-0 bg-white border border-gray-100 shadow-xl rounded-3xl p-10 flex flex-col md:flex-row gap-10 z-50"
-                    style={{
-                      boxShadow: "0 8px 24px rgba(0,0,0,0.08)",
-                      width: "500px",
-                    }}
-                  >
-                    {/* Left Column */}
-                    <div className="flex flex-col gap-8">
-                      <Link to='/facewebcam' className="block">
-                          <div>
-                        <h4 className="font-bold text-gray-900 text-lg flex items-center gap-2">
-                          Webcam Detection{" "}
-                          <ArrowRight className="text-blue-600 w-4 h-4" />
-                        </h4>
-                        <p className="text-gray-500 text-sm mt-1 text-left">
-                          AI checks safety gear instantly.
-                        </p>
-                      </div>
-                      </Link>
-                      <div>
-                        <h4 className="font-bold text-gray-900 text-lg flex items-center gap-2">
-                          Instant Alerts{" "}
-                          <ArrowRight className="text-blue-600 w-4 h-4" />
-                        </h4>
-                        <p className="text-gray-500 text-sm mt-1 text-left">
-                          Notify non-compliance in real time.
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Right Column */}
-                    <div className="flex flex-col gap-8">
-                      <Link to="/employee/dashboard">
-                          <div>
-                        <h4 className="font-bold text-gray-900 text-lg flex items-center gap-2">
-                          Dashboard{" "}
-                          <ArrowRight className="text-blue-600 w-4 h-4" />
-                        </h4>
-                        <p className="text-gray-500 text-sm mt-1 text-left">
-                          View attendance & performance.
-                        </p>
-                      </div>
-                      </Link>
-                    </div>
-
-                    {/* Pointer Triangle */}
-                    <div className="absolute -top-2 right-10 w-4 h-4 bg-white rotate-45 border-t border-l border-gray-100"></div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between">
+          <Link to="/" className="flex items-center gap-2 group">
+            <div className="relative">
+              <div className="absolute inset-0 bg-orange-500 blur-lg opacity-20 group-hover:opacity-40 transition-opacity" />
+              <img src={logo} alt="WolfEye+ Logo" className="h-8 w-auto relative z-10" />
             </div>
-          </nav>
+            <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-700">
+              WolfEye<span className="text-orange-600">+</span>
+            </span>
+          </Link>
 
-          {/* Profile Icon */}
-          <div className="flex items-center justify-center w-9 h-9 bg-gray-300 rounded-full">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="currentColor"
-              className="w-5 h-5 text-white"
-              viewBox="0 0 16 16"
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center gap-8">
+            <div className="flex items-center gap-6">
+              <Link to="/employee/dashboard" className="text-sm font-medium text-gray-600 hover:text-orange-600 transition-colors">
+                Dashboard
+              </Link>
+              <Link to="/facewebcam" className="text-sm font-medium text-gray-600 hover:text-orange-600 transition-colors">
+                Safety Check
+              </Link>
+            </div>
+
+            <div className="h-6 w-px bg-gray-200" />
+
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-orange-100 to-orange-50 border border-orange-200 flex items-center justify-center text-orange-600 font-bold text-sm">
+                EP
+              </div>
+            </div>
+          </div>
+
+          {/* Mobile Menu Button */}
+          <button
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="md:hidden p-2 text-gray-600 hover:text-orange-600 transition-colors"
+          >
+            {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
+        </div>
+      </motion.nav>
+
+      {/* Mobile Menu Overlay */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="fixed inset-x-0 top-[72px] z-40 bg-white/95 backdrop-blur-xl border-b border-gray-100 md:hidden p-4 shadow-xl"
+          >
+            <div className="flex flex-col gap-4">
+              <Link
+                to="/employee/dashboard"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="p-3 rounded-xl bg-gray-50 text-gray-900 font-medium hover:bg-orange-50 hover:text-orange-600 transition-colors flex items-center gap-3"
+              >
+                <Clock size={18} /> Dashboard
+              </Link>
+              <Link
+                to="/facewebcam"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="p-3 rounded-xl bg-gray-50 text-gray-900 font-medium hover:bg-orange-50 hover:text-orange-600 transition-colors flex items-center gap-3"
+              >
+                <Shield size={18} /> Safety Check
+              </Link>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Main Content */}
+      <main className="relative z-10 pt-32 pb-20 px-4 sm:px-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
+            {/* Left Content */}
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6 }}
+              className="flex-1 text-center lg:text-left"
             >
-              <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm4-3a4 4 0 1 1-8 0 4 4 0 0 1 8 0z" />
-              <path d="M14 14s-1-1.5-6-1.5S2 14 2 14s1-3 6-3 6 3 6 3z" />
-            </svg>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-orange-50 border border-orange-100 text-orange-600 text-sm font-semibold mb-6 shadow-sm"
+              >
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-500"></span>
+                </span>
+                Employee Portal
+              </motion.div>
+
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-[1.1] mb-6 tracking-tight">
+                Work Safe. <br />
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-amber-500">
+                  Stay Protected.
+                </span>
+              </h1>
+              
+              <p className="text-lg text-gray-600 leading-relaxed mb-8 max-w-xl mx-auto lg:mx-0">
+                Start your shift with confidence. Use our AI-powered safety verification to ensure you're fully equipped with the right PPE gear before entering the site.
+              </p>
+
+              <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
+                <Link
+                  to="/facewebcam"
+                  className="w-full sm:w-auto px-8 py-4 bg-gray-900 hover:bg-black text-white rounded-2xl font-semibold transition-all shadow-lg hover:shadow-xl hover:-translate-y-1 flex items-center justify-center gap-2 group"
+                >
+                  Start Safety Check
+                  <ArrowUpRight className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                </Link>
+                
+                <Link
+                  to="/employee/dashboard"
+                  className="w-full sm:w-auto px-8 py-4 bg-white border border-gray-200 text-gray-900 hover:border-orange-200 hover:bg-orange-50 rounded-2xl font-semibold transition-all flex items-center justify-center gap-2"
+                >
+                  View Dashboard
+                  <ArrowRight size={18} />
+                </Link>
+              </div>
+
+              {/* Stats */}
+              <div className="mt-12 grid grid-cols-3 gap-6 border-t border-gray-100 pt-8">
+                <div>
+                  <div className="text-2xl font-bold text-gray-900">100%</div>
+                  <div className="text-sm text-gray-500 mt-1">AI Accuracy</div>
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-gray-900">&lt;2s</div>
+                  <div className="text-sm text-gray-500 mt-1">Detection Time</div>
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-gray-900">24/7</div>
+                  <div className="text-sm text-gray-500 mt-1">Availability</div>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Right Content - Modern Cards/Visuals instead of Mascot */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.8 }}
+              className="flex-1 w-full max-w-lg lg:max-w-none"
+            >
+              <div className="relative">
+                {/* Decorative blobs */}
+                <div className="absolute -top-20 -right-20 w-72 h-72 bg-orange-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse" />
+                <div className="absolute -bottom-20 -left-20 w-72 h-72 bg-amber-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse" />
+                
+                {/* Main Glass Card */}
+                <div className="relative bg-white/60 backdrop-blur-2xl border border-white/50 rounded-[2.5rem] p-8 shadow-2xl">
+                  <div className="flex items-center justify-between mb-8">
+                    <div>
+                      <h3 className="text-lg font-bold text-gray-900">Safety Status</h3>
+                      <p className="text-sm text-gray-500">Real-time monitoring</p>
+                    </div>
+                    <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
+                      <CheckCircle className="w-6 h-6 text-green-600" />
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    {[
+                      { label: "Helmet Detected", status: "Verified", color: "text-green-600", bg: "bg-green-50" },
+                      { label: "Safety Vest", status: "Verified", color: "text-green-600", bg: "bg-green-50" },
+                      { label: "Safety Goggles", status: "Verified", color: "text-green-600", bg: "bg-green-50" },
+                      { label: "Gloves", status: "Pending", color: "text-orange-600", bg: "bg-orange-50" }
+                    ].map((item, i) => (
+                      <div key={i} className="flex items-center justify-between p-4 rounded-2xl bg-white/50 border border-white/60 shadow-sm">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-2 h-2 rounded-full ${item.status === "Verified" ? "bg-green-500" : "bg-orange-500"}`} />
+                          <span className="font-medium text-gray-700">{item.label}</span>
+                        </div>
+                        <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${item.bg} ${item.color}`}>
+                          {item.status}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Floating Elements */}
+                  <motion.div
+                    animate={{ y: [0, -10, 0] }}
+                    transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                    className="absolute -right-8 top-20 bg-white p-4 rounded-2xl shadow-xl border border-gray-100"
+                  >
+                    <Shield className="w-8 h-8 text-orange-500" />
+                  </motion.div>
+
+                  <motion.div
+                    animate={{ y: [0, 10, 0] }}
+                    transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+                    className="absolute -left-8 bottom-20 bg-white p-4 rounded-2xl shadow-xl border border-gray-100"
+                  >
+                    <Clock className="w-8 h-8 text-blue-500" />
+                  </motion.div>
+                </div>
+              </div>
+            </motion.div>
           </div>
         </div>
-      </motion.header>
-
-      {/* Hero Section (UNCHANGED) */}
-      <section className="relative flex flex-col lg:flex-row items-center justify-between w-full max-w-7xl z-10">
-        {/* Left Side (Text + Stats) */}
-        <motion.div
-          initial={{ opacity: 0, x: -60 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
-          className="flex-1 text-left"
-        >
-          <h1
-            className="text-6xl md:text-5xl font-bold text-gray-900 leading-tight mb-4"
-            style={{ fontFamily: "Plus Jakarta Sans" }}
-          >
-            WolfEye+ <br /> Protect Every Worker
-          </h1>
-          <p
-            className="text-gray-600 leading-relaxed mb-8 max-w-250"
-            style={{ fontFamily: "Inter" }}
-          >
-            AI-powered detection ensures every worker wears the required safety
-            gear before starting work. Track attendance, monitor compliance, and
-            reward disciplined behavior through a simple webcam and intuitive
-            dashboard.
-          </p>
-
-          {/* Try Button */}
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.97 }}
-            className="bg-black text-white px-6 py-3 rounded-full flex items-center gap-2 hover:bg-gray-800 transition-all mb-10 shadow-md"
-          >
-            Try WolfEye+
-            <ArrowUpRight size={18} />
-          </motion.button>
-
-          {/* Stats Section */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4, duration: 0.7, ease: "easeOut" }}
-            className="grid grid-cols-3 gap-7 mt-9 text-center max-w-md"
-          >
-            <div>
-              <p className="text-5xl font-bold text-gray-900">25+</p>
-              <p className="text-gray-500 mt-1 text-sm">Sites Monitored</p>
-            </div>
-            <div>
-              <p className="text-5xl font-bold text-gray-900">500+</p>
-              <p className="text-gray-500 mt-1 text-sm">Workers Protected</p>
-            </div>
-            <div>
-              <p className="text-5xl font-bold text-gray-900">98%</p>
-              <p className="text-gray-500 mt-1 text-sm">Compliance Rate</p>
-            </div>
-          </motion.div>
-        </motion.div>
-
-        {/* Mascot Section */}
-        <motion.div
-          initial={{ opacity: 0, x: 80 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
-          className="flex-1 relative mt-9 lg:mt-0 flex justify-center items-center -ml-0"
-        >
-          {/* Orange Info Box */}
-          <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ delay: 0.6, duration: 0.6, ease: "easeOut" }}
-            className="absolute top-8 left-8 bg-orange-500 text-white text-sm font-semibold px-5 py-6 rounded-xl shadow-lg text-left leading-tight ml-30"
-          >
-            See
-            <br />
-            Beyond with
-            <br />
-            <span className="text-2xl">WolfEye+</span>
-          </motion.div>
-
-          {/* Mascot Image */}
-          <motion.img
-            src={wolfMascot}
-            alt="Wolf Mascot"
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ delay: 0.3, duration: 0.8, ease: "easeOut" }}
-            className="w-72 md:w-96 object-contain relative z-10 ml-50"
-          />
-
-          {/* Floating Button */}
-          <motion.div
-            whileHover={{ rotate: 45, scale: 1.1 }}
-            transition={{ type: "spring", stiffness: 200 }}
-            className="absolute bottom-0 right-0 bg-black text-white p-6 rounded-2xl shadow-lg flex items-center justify-center z-20 ml-90"
-          >
-            <ArrowUpRight size={40} />
-          </motion.div>
-        </motion.div>
-      </section>
+      </main>
     </div>
   );
 }
