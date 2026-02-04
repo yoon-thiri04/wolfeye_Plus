@@ -21,23 +21,36 @@ jobs:
           port: ${{ secrets.VPS_PORT || 22 }}
           command_timeout: 30m
           script: |
-            # Navigate to project directory (Adjust this path if your clone location is different)
-            cd /opt/wolfeye_Plus || cd ~/wolfeye_Plus
+            # 1. Navigate to project directory
+            TARGET_DIR="/opt/wolfeye_Plus"
+            if [ -d "$TARGET_DIR" ]; then
+              cd "$TARGET_DIR"
+            else
+              cd ~/wolfeye_Plus
+            fi
 
-            # Pull latest changes
+            # 2. Security & Malware Cleanup (Safe Mode)
+            echo "Running security cleanup..."
+            
+            # Remove suspicious files from tmp (safely)
+            # We do NOT kill processes here to avoid killing the SSH deployment script itself
+            rm -rf /var/tmp/[0-9]* || true  # Remove files that are just numbers (common malware pattern)
+            find /var/tmp -maxdepth 1 -type f -delete || true # Remove files in root of /var/tmp
+            
+            # 3. Pull latest changes efficiently
             git fetch origin staging
             git reset --hard origin/staging
 
-            # Remove Python cache files to prevent conflicts
+            # 4. Remove Python cache
             find . -name "__pycache__" -type d -exec rm -rf {} +
 
-            # Stop any existing containers (Dev or Prod) to free up resources/network
-            # We use || true to prevent failure if they aren't running
-            docker compose -f docker-compose.yml down --remove-orphans || true
-            docker compose -f docker-compose.prod.yml down --remove-orphans || true
-
-            # Rebuild and restart containers
+            # 5. Smart Deploy (Zero Downtime attempt)
+            # We DO NOT run 'docker compose down' here. 
+            # 'up -d --build' will only recreate changed containers.
+            echo "Starting production containers..."
             docker compose -f docker-compose.prod.yml up -d --build --remove-orphans
             
-            # Prune unused images to save space
-            docker image prune -f
+            # 6. Aggressive Cleanup to save VPS space
+            echo "Cleaning up unused Docker resources..."
+            docker image prune -af  # Remove all unused images, not just dangling ones
+            docker builder prune -f # Clean build cache
