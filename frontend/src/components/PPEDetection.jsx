@@ -165,24 +165,22 @@ export default function PPEDetection() {
         isSpeakingRef.current = false;
         speechQueueRef.current = [];
       }
-    } else {
-      // Fallback to text-to-speech if audio not found
-      // Check if priority audio is playing
-      if (!isPriorityAudioPlaying()) {
-        const msg = new SpeechSynthesisUtterance(`Please show your ${nextItem} clearly`);
-        msg.rate = 1;
-        msg.lang = 'en-US';
-        msg.onend = () => {
-          setTimeout(() => {
-            speakNext();
-          }, 1500);
-        };
-        window.speechSynthesis.speak(msg);
-      } else {
-        isSpeakingRef.current = false;
-        speechQueueRef.current = [];
-      }
-    }
+//     } else {
+//       if (!isPriorityAudioPlaying()) {
+//         const msg = new SpeechSynthesisUtterance(`Please show your ${nextItem} clearly`);
+//         msg.rate = 1;
+//         msg.lang = 'en-US';
+//         msg.onend = () => {
+//           setTimeout(() => {
+//             speakNext();
+//           }, 1500);
+//         };
+//         window.speechSynthesis.speak(msg);
+//       } else {
+//         isSpeakingRef.current = false;
+//         speechQueueRef.current = [];
+//       }
+//     }
   };
 
   // Helper function to check if priority audio is playing
