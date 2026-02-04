@@ -12,7 +12,7 @@ export default function LiveFaceVerify() {
   const audioRef = useRef(null);
 
   useEffect(() => {
-    alertAudioRef.current = new Audio(`${import.meta.env.BASE_URL}alert.mp3`);
+    alertAudioRef.current = new Audio(`${import.meta.env.BASE_URL}face-recognition-notsuccess.mp3`);
     alertAudioRef.current.preload = "auto";
 
     const preloadAudio = async () => {

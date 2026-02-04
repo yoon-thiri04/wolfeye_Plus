@@ -9,7 +9,7 @@ import glove from "../assets/sound_effect/pls-show-ur-gloves.mp3";
 import google from "../assets/sound_effect/pls-show-ur-googles.mp3";
 import hat from "../assets/sound_effect/pls-show-ur-hat-cleary.mp3";
 import vest from "../assets/sound_effect/pls-show-ur-vest.mp3";
-import earprotection from "../assets/sound_effect/pls_show_ur_ear-pro_clearly.mp3";
+import ear_protection from "../assets/sound_effect/pls_show_ur_ear-pro_clearly.mp3";
 
 export default function PPEDetection() {
   const webcamRef = useRef(null);
@@ -40,7 +40,7 @@ export default function PPEDetection() {
     goggles: new Audio(google),
     helmet: new Audio(hat),
     vest: new Audio(vest),
-    earprotection: new Audio(earprotection)
+    ear_protection: new Audio(ear_protection)
   });
 
   // Function to stop all audio playback
@@ -135,7 +135,7 @@ export default function PPEDetection() {
       'goggles': 'goggles',
       'helmet': 'helmet',
       'vest': 'vest',
-      'ear_protection': 'earprotection'
+      'ear_protection': 'ear_protection'
     };
 
     const audioKey = audioMap[nextItem];
